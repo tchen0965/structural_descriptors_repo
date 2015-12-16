@@ -1,5 +1,6 @@
 # osx noise
 .DS_Store
+.idea
 profile
 
 # xcode noise
