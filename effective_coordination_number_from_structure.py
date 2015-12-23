@@ -1,7 +1,7 @@
 __author__ = 'Tina'
+__contributor__ = 'Anubhav Jain'
 
 from pymatgen.core.structure import Structure
-from pymatgen import PeriodicSite
 import math
 import numpy
 
