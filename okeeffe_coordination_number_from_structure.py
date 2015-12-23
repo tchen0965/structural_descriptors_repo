@@ -7,6 +7,7 @@ import math
 import re
 import numpy
 
+# TODO: see my TODOs from "effective_coordination_number..." and apply them here as well
 
 def getAvgOKeeffeCN(structure, radius):
     substructList = substructures_from_structure(structure)
