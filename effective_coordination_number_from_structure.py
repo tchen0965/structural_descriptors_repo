@@ -59,7 +59,6 @@ def getAllCationPolyhedral(structure, radius = 3.0):
         bondweights = [] # list of bond weights of anions
         for entry in structure.get_neighbors(site, radius):
             if entry[0].species_string in anions and entry[1] < radius:
-                # sites.append(entry)
                 anionSites.append(entry)
                 bondlengths.append(entry[1])
 
@@ -71,11 +70,7 @@ def getAllCationPolyhedral(structure, radius = 3.0):
                 if calculateBondWeight(bond[1], bondlengths) > 0: #do not count nearby anions that do not contribute
                     sites.append(bond)
                     bondweights.append(calculateBondWeight(bond[1], bondlengths))
-                    #print bond
-        #print "next central site"
         polyhedralList.append([sites, round(sum(bondweights))])
-        #polyhedralList.append(sites)
-            # list of polyhedral (-> list of list of sites) + coordnum
 
     return polyhedralList
 
@@ -102,4 +97,5 @@ def calculateWeightedAvg(bonds):
 if __name__ == '__main__':
     # TODO: move this code to an "examples" module. Include the file LiCoO2.cif in the repo in that module, otherwise no one else can run your code.
     s = Structure.from_file('LiCoO2.cif', True, True)
-    print getAvgCN(s, 3.0)
+    print s
+    print getAvgCN(s, 3.2)

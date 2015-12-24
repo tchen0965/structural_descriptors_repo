@@ -28,3 +28,7 @@ def getAvgOKeeffeCN(structure, radius):
 if __name__ == '__main__':
     s = Structure.from_file('LiCoO2.cif', True, True)
     print getAvgOKeeffeCN(s, 3.0)
+    for item in getAvgOKeeffeCN(s, 3.0):
+        print type(item[0])
+        print item[0]
+        print item[1]
