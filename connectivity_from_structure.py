@@ -3,7 +3,7 @@ __author__ = 'Tina'
 
 from pymatgen.core.structure import Structure
 from pymatgen import PeriodicSite
-from effective_coordination_number_from_structure import calculateBondWeight, getAllCationPolyhedral
+from effective_coordination import EffectiveCoordFinder
 import math
 import numpy
 
