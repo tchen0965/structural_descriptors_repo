@@ -1,7 +1,7 @@
 from __future__ import division
 
-__author__ = 'Tina'
-__contributor__ = 'Anubhav Jain'
+__author__ = 'Tina_Chen'
+__contributor__ = 'Anubhav_Jain'
 
 import math
 import numpy
