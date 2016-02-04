@@ -1,10 +1,11 @@
 from __future__ import division
 
-__author__ = 'Tina'
-__contributor__ = 'Anubhav Jain'
+__author__ = 'Tina_Chen'
+__contributor__ = 'Anubhav_Jain'
 
 import math
 import numpy
+from connectivity_from_structure import Polyhedra
 
 
 class EffectiveCoordFinder(object):
@@ -23,16 +24,15 @@ class EffectiveCoordFinder(object):
 
     """
 
-    def __init__(self, structure, target=None):
+    def __init__(self, structure):
         self._structure = structure
-        if target is None:
-            self._target = structure.composition.elements
-        else:
-            self._target = target
+        #if target is None:
+        #    self._target = structure.composition.elements
+        #else:
+        #    self._target = target
 
     def getAvgCN(self, radius):
         """
-
         Get the average coordination for all cations in structure.
 
         :param structure: (Structure) target structure
@@ -40,7 +40,7 @@ class EffectiveCoordFinder(object):
         :return: (dict) A dictionary with keys corresponding to different cations and the values to the cation's ECoN
             coordination number averaged over all polyhedra with the same cation center in the structure
         """
-        cationCNs = self.get_all_cation_polyhedral(radius)
+        cationCNs = self.get_cation_CN(radius)
 
         avgCNs = {}
         for cation in cationCNs.keys():
@@ -49,9 +49,8 @@ class EffectiveCoordFinder(object):
         return avgCNs
 
 
-    def get_all_cation_polyhedral(self, radius = 3.0):
+    def get_cation_CN(self, radius = 3.0):
         """
-
         Get all cation-centered polyhedra for a structure
 
         :param structure: (Structure) target structure
@@ -67,60 +66,71 @@ class EffectiveCoordFinder(object):
         for site in self._structure.sites:
             if not site.species_string in anions:  # TODO: how do you handle mixed occupancy sites?
                 cationSites.append(site)
-        #print structure.formula
-        polyhedralList = {} #list of polyhedrals with cations at the center  # TODO: PolyhedralList needs to be a more organized/encapsulated data structure. Talk to Anubhav
+        CNList = {} #list of polyhedrals with cations at the center  # TODO: PolyhedralList needs to be a more organized/encapsulated data structure. Talk to Anubhav
         for site in cationSites:
             sites = {}
             sites[site.species_string] = []
             anionSites = [] # list of all neighboring anions
             bondlengths = [] # list of bond lengths of anions
             bondweights = [] # list of bond weights of anions
-            for entry in self._structure.get_neighbors(site, radius):
+            for entry in self._structure.get_neighbors(site, radius): #entry = (site, distance)
                 if entry[0].species_string in anions and entry[1] < radius:
                     anionSites.append(entry)
                     bondlengths.append(entry[1])
 
             for bond in anionSites:
-                if self.calculate_bond_weight(bond[1], bondlengths) > 10.0**-5: #do not count nearby anions that do not contribute
+                if calculate_bond_weight(bond[1], bondlengths) > 10.0**-5: #do not count nearby anions that do not contribute
                     sites[site.species_string].append(bond)
-                    bondweights.append(self.calculate_bond_weight(bond[1], bondlengths))
+                    bondweights.append(calculate_bond_weight(bond[1], bondlengths))
 
-            if not site.species_string in polyhedralList.keys():
-                polyhedralList[site.species_string] = [round(sum(bondweights))]
+            if not site.species_string in CNList.keys():
+                CNList[site.species_string] = [sum(bondweights)]
             else:
-                polyhedralList[site.species_string].append(round(sum(bondweights)))
+                CNList[site.species_string].append(sum(bondweights))
 
-        return polyhedralList
+        return CNList
+
+def get_effective_CN(polyhedra):
+    """
+    Get the effective coordination number for a Polyhedra object
+
+    :param polyhedra: target polyhedra
+    :return: (float) Effective coordination number of the polyhedra as given by Hoppe, 1979
+    """
+    bondweights = []
+    for peripheral in polyhedra.get_peripheral_sites():
+        bondlength = calculate_bond_weight(peripheral.distance(polyhedra.get_central_site()))
+        if calculate_bond_weight(bondlength, polyhedra.get_peripheral_distances()) > 10.0**-5:
+            bondweights.append(bondlength)
+
+    return sum(bondweights)
+
+def calculate_bond_weight(bondlength, bonds):
+    """
+    Get the weight of a given bond (defined by the effective coordination number formula in Hoppe, 1979) in a polyhedra
+
+    :param bond: (float) target bond length
+    :param bonds: (list) list of all bond lengths between the central ion and the peripheral ions in a polyhedra
+    (including target bond)
+    :return: (float) the bond's weight
+    """
+
+    weight = math.exp(1-(bondlength/calculate_weighted_avg(bonds))**6)
+    return weight
 
 
-    def calculate_bond_weight(self, bond, bonds):
-        """
+def calculate_weighted_avg(bonds):
+    """
+    Get the weighted average bond length given by the effective coordination number formula in Hoppe (1979)
 
-        Get the weight of a given bond (defined by the effective coordination number formula in Hoppe, 1979) in a polyhedra
+    :param bonds: (list) list of floats that are the bond distances between a cation and its peripheral ions
+    :return: (float) exponential weighted average
+    """
 
-        :param bond: (float) target bond
-        :param bonds: (list) list of all bonds to peripheral ions in a polyhedra (including target bond)
-        :return: (float) the bond's weight
-        """
-
-        weight = math.exp(1-(bond/self.calculate_weighted_avg(bonds))**6)
-        return weight
-
-    # calculates the weighted average bond length
-    # takes a list of bond lengths as the input
-    def calculate_weighted_avg(self, bonds):
-        """
-
-        Get the weighted average bond length given by the effective coordination number formula in Hoppe (1979)
-
-        :param bonds: (list) list of floats that are the bond distances between a cation and its peripheral ions
-        :return: (float) exponential weighted average
-        """
-
-        minimumBond = min(bonds)
-        weightedSum = 0.0
-        totalSum = 0.0
-        for entry in bonds:
-            weightedSum += entry*math.exp(1 - (entry/minimumBond)**6)
-            totalSum += math.exp(1-(entry/minimumBond)**6)
-        return weightedSum/totalSum
+    minimumBond = min(bonds)
+    weightedSum = 0.0
+    totalSum = 0.0
+    for entry in bonds:
+        weightedSum += entry*math.exp(1 - (entry/minimumBond)**6)
+        totalSum += math.exp(1-(entry/minimumBond)**6)
+    return weightedSum/totalSum
