@@ -4,13 +4,9 @@ __contributor__ = 'Stephen_Dacek'
 
 from pymatgen import Structure
 from pymatgen import PeriodicSite
-<<<<<<< HEAD
-from effective_coordination import EffectiveCoordFinder
-=======
-from effective_coordination import calculate_bond_weight, EffectiveCoordFinder
+import effective_coordination
 from pymatgen.analysis.structure_analyzer import VoronoiCoordFinder
 from itertools import combinations
->>>>>>> origin/master
 import math
 import numpy
 
@@ -23,11 +19,11 @@ shared peripheral ions indicate that there is edge-sharing connectivity between 
 peripheral ions indicate that there is face-sharing connectivity between the polyhedra.
 
 For the purpose of this code, the peripheral ions will be defined by the ions surrounding a central site as given by
-structure's get_neighbors function.
+structure's get_neighbors function, with bond weight contributions (given by Hoppe, 1979) less than a set cut-off value.
 
 """
 
-class Polyhedra(object, object):
+class Polyhedra(object):
 
     """
     Object representing a polyhedra in a structure with central ion site "cation" and surrounding ions site
@@ -37,6 +33,7 @@ class Polyhedra(object, object):
 
     def __init__(self, cation, peripheralIons):
         self.central_ion = cation
+        self.central_ion_name = cation.species_string
         self.peripheral_ions = peripheralIons
 
         self.composition = self.central_ion._species
@@ -44,7 +41,7 @@ class Polyhedra(object, object):
             self.composition += site._species
 
     def get_central_name(self):
-        return self.central_ion.species_string
+        return self.central_ion_name
 
     def get_peripheral_sites(self):
         return self.peripheral_ions
@@ -52,7 +49,10 @@ class Polyhedra(object, object):
     def get_central_site(self):
         return self.central_ion
 
-    def get_connectivity(self, polyhedra2):
+    def set_central_name(self, new_name):
+        self.central_ion_name = new_name
+
+    def get_connection(self, other):
         """
         Gives the connectivity between the given polyhedra and another polyhedra by counting the number of atoms shared
         between the two polyhedra
@@ -62,10 +62,14 @@ class Polyhedra(object, object):
         :return: (int) Integer giving the number of peripheral ions shared by the current polyhedra and the target
         polyhedra; returns -1 if the same polyhedra is being compared to itself
         """
+        assert isinstance(other, Polyhedra)
 
-        return len(self.get_connections(polyhedra2))
+        if self.central_ion == other.central_ion:
+            return -1
 
-    def get_connections(self, polyhedra2):
+        return len(self.get_connections(other))
+
+    def get_connections(self, other):
         """
         Gives the shared sites between the current Polyhedra and the given Polyhedra
 
@@ -76,6 +80,9 @@ class Polyhedra(object, object):
 
         assert isinstance(other, Polyhedra)
 
+        if self.central_ion == other.central_ion:
+            print "Checking connections between exact same polyhedra"
+
         shared_sites = []
 
         for site in other.peripheral_ions:
@@ -84,7 +91,7 @@ class Polyhedra(object, object):
                     shared_sites.append(site)
         return shared_sites
 
-    def is_connected(self, polyhedra2):
+    def is_connected(self, other):
         """
         Checks whether the current Polyhedra is connected to the given Polyhedra
         :param polyhedra2: (Polyhedra) target Polyhedra against which we are checking for connectivity with the current
@@ -92,7 +99,10 @@ class Polyhedra(object, object):
         :return: (boolean) Whether the two Polyhedra have any shared peripheralIons
         """
 
-        assert isinstance(Polyhedra)
+        assert isinstance(other, Polyhedra)
+
+        if self.central_ion == other.central_ion:
+            print "Checking connections between exact same polyhedra"
 
         for site in other.peripheralIons:
             for c_site in self.peripheralIons:
@@ -143,7 +153,7 @@ def get_surrounding_connectivity(structure, polyhedra, radius):
     of the list are of the form: [[polyhedra, connection], ...]
     """
 
-    polyhedraList = get_cation_polyhedra_for_connectivity(structure, radius)
+    polyhedraList = get_supercell_polyhedra(structure, radius)
 
     connectedPolyhedra = []
     for otherPolyhedra in polyhedraList:
@@ -172,21 +182,23 @@ def get_polyhedra(structure, site, radius=3.2):
 
     for entry in structure.get_neighbors(site, radius):
         if entry[0].species_string in anions and entry[1] < radius:
-            anionSites.append(entry)
+            anionSites.append(entry[0])
             bondlengths.append(entry[1])
     for potentialPeripheralIons in anionSites:
-        if calculate_bond_weight(potentialPeripheralIons[1], bondlengths) > 10.0**-5: #do not count nearby anions that do not contribute
+        #do not count nearby anions that do not contribute
+        if effective_coordination.calculate_bond_weight(potentialPeripheralIons[1], bondlengths) > 1e-2:
             peripheralSites.append(potentialPeripheralIons)
 
     return Polyhedra(site, peripheralSites)
 
+
+
 def count_connectivity(structure, radius = 3.2):
 
     """
-    Will likely not be used in favor of get_connectivity_matrix()
 
     Gives the total counts of each type of connectivity (point-sharing, edge-sharing, face-sharing, as well as polyhedra
-    that do not have sharing with any other polyhedra) within a given structure
+    that do not have sharing with any other polyhedra) within a given structure for each cation
 
     :param structure: (Structure) target structure
     :return: (dict) dictionary of all connectivity counts for each cation, where connectivity of 0 implies no
@@ -196,36 +208,47 @@ def count_connectivity(structure, radius = 3.2):
     face-connectivity counts]
     """
 
-    polyhedraList = get_cation_polyhedra_for_connectivity(structure, radius)
+    polyhedra_list = get_supercell_polyhedra(structure, radius)
 
+    # Get the polyhedra in the central cell of the supercell from which to calculate connectivities
+    center_cell_polyhedra = []
+    for polyhedra in polyhedra_list:
+        site_coords = polyhedra.get_central_site().frac_coords
+        if site_coords[0] >= (1.0/3)-1e-5 and site_coords[0] < (2.0/3):
+            if site_coords[1] >= (1.0/3)-1e-5 and site_coords[1] < (2.0/3):
+                if site_coords[2] >= (1.0/3)-1e-5 and site_coords[2] < (2.0/3):
+                    center_cell_polyhedra.append(polyhedra)
+
+
+    # Count the number of connections between the
     connections = {}
-    for polyhedra1 in polyhedraList:
+    for polyhedra1 in center_cell_polyhedra:
         cation = polyhedra1.get_central_name()
         connected = False #keep track of whether a polyhedra is not connected to any other polyhedra
         if not cation in connections.keys():
-            connections[cation] = [0,0,0,0]
-        for polyhedra2 in polyhedraList:
+            connections[cation] = {"none": 0, "point": 0,"edge": 0, "face": 0}
+        for polyhedra2 in polyhedra_list:
             connection = polyhedra1.get_connection(polyhedra2)
             if connection < 0:
                 continue
             if connection == 1:
-                connections[cation][1] += 1
+                connections[cation]["point"] += 1
                 connected = True
             if connection == 2:
-                connections[cation][2] += 1
+                connections[cation]["edge"] += 1
                 connected = True
             if connection >= 3:
-                connections[cation][3] += 1
+                connections[cation]["face"] += 1
                 connected = True
         if connected == False:
-            connections[cation][0] += 1
+            connections[cation]["none"] += 1
 
     return connections
 
-def get_cation_polyhedra_for_connectivity(structure, radius = 3.2):
+def get_supercell_polyhedra(structure, radius = 3.2):
     """
     Obtains all cation polyhedra needed to describe connectivity by creating a supercell and converting sites in the
-    structure to cation polyhedra
+    structure to cation polyhedra (peripheral ions of the polyhedra given by the
 
     :param structure: (Structure) target structure
     :param radius: (float) radius within which to determine whether a nearby atom is a peripheral ion
@@ -234,17 +257,12 @@ def get_cation_polyhedra_for_connectivity(structure, radius = 3.2):
 
     anions = ['O2-', 'O', 'F-', 'F', 'Cl-', 'Cl', 'I-', 'I', 'Br-', 'Br', 'S2-', 'S']
 
-    supercell = structure.make_supercell((3, 3, 3))
-
-    vcf = VoronoiCoordFinder(supercell)
-
+    structure.make_supercell((3, 3, 3))
 
     polyhedra = []
-    for site_index in range(supercell.num_sites):
-        print supercell[site_index]
-        # check connectivities of only those atoms in the central unit cell
-        #if supercell[site_index].species_string not in anions:
-        #    polyhedra.append(Polyhedra(supercell[site_index], vcf.get_coordinated_sites(site_index)))
+    for site_index in range(structure.num_sites):
+        if structure[site_index].species_string not in anions:
+            polyhedra.append(get_polyhedra(structure, structure[site_index]))
 
     return polyhedra
 
@@ -252,7 +270,9 @@ def get_cation_polyhedra_for_connectivity(structure, radius = 3.2):
 def get_connectivity_matrix(structure, radius = 3.2):
     """
     Creates a connectivity matrix to describe the connectivity between cations in a structure; connections between
-    cation polyhedra and reflections of itself (and reflections of other cation polyhedra) are also counted
+    cation polyhedra and reflections of itself (and reflections of other cation polyhedra) are also counted; different
+    sites of the same cation species are NOT differentiated (that is, all instances of each cation are counted all
+    together)
 
     :param structure: (Structure) target structure
     :param radius: (float) radius within which to determine whether a nearby atom is a peripheral ion
@@ -262,7 +282,63 @@ def get_connectivity_matrix(structure, radius = 3.2):
     face-sharing] instances between the first Polyhedra and all of the reflections of the second Polyhedra
     """
 
-    polyhedra_list = get_cation_polyhedra_for_connectivity(structure, radius)
+    polyhedra_list = get_supercell_polyhedra(structure, radius)
+
+    # get the polyhedra in the central cell of the supercell from which to calculate connectivities
+    center_cell_polyhedra = []
+    cation_names = []
+    for polyhedra in polyhedra_list:
+        site_coords = polyhedra.get_central_site().frac_coords
+        if site_coords[0] >= (1.0/3)-1e-5 and site_coords[0] < (2.0/3)-1e-5:
+            if site_coords[1] >= (1.0/3)-1e-5 and site_coords[1] < (2.0/3)-1e-5:
+                if site_coords[2] >= (1.0/3)-1e-5 and site_coords[2] < (2.0/3)-1e-5:
+                    center_cell_polyhedra.append(polyhedra)
+                    cation_names.append(polyhedra.get_central_name())
+
+    # instantiate nested dictionaries for connections
+    connections = {}
+    for cation_1 in cation_names:
+        connections[cation_1] = {}
+        for cation_2 in cation_names:
+            connections[cation_1][cation_2] = {"point": 0, "edge": 0, "face": 0}
+
+    # count connections between specific polyhedra to create adjacency matrix
+    # matrix should be symmetric, i.e. connections between cation1 and cation2 should be the same as connections
+    # between cation2 and cation1
+    for inner_polyhedra in center_cell_polyhedra:
+        inner_cation = inner_polyhedra.get_central_name()
+        for outer_polyhedra in polyhedra_list:
+            outer_cation = outer_polyhedra.get_central_name()
+            connection = inner_polyhedra.get_connection(outer_polyhedra)
+            if connection < 0:
+                continue
+            if connection == 1:
+                connections[inner_cation][outer_cation]["point"] += 1
+            if connection == 2:
+                connections[inner_cation][outer_cation]["edge"] += 1
+            if connection >= 3:
+                connections[inner_cation][outer_cation]["face"] += 1
+        break
+
+    return connections
+
+def get_connectivity_matrix_2(structure, radius = 3.2):
+
+    """
+    Creates a connectivity matrix to describe the connectivity between cations in a structure; connections between
+    cation polyhedra and reflections of itself (and reflections of other cation polyhedra) are also counted; different
+    sites of the same species ARE differentiated (that is, connectivity for cations with different sites, not including
+    reflections, are counted separately)
+
+    :param structure: (Structure) target structure
+    :param radius: (float) radius within which to determine whether a nearby atom is a peripheral ion
+    :return: (dict) dictionary of dictionaries, with the first set of keys being the specified (unreflected) Polyhedra
+    sites, the second (inner) set of keys being the specified (unreflected) Polyhedra sites which we are comparing
+    connectivity to, and the values being a list [x, y, z] which give the numbers of [point-sharing, edge-sharing, and
+    face-sharing] instances between the first Polyhedra and all of the reflections of the second Polyhedra
+    """
+
+    polyhedra_list = get_supercell_polyhedra(structure, radius)
 
     # for all polyhedra in list
         # for all polyhedra in list
@@ -270,136 +346,74 @@ def get_connectivity_matrix(structure, radius = 3.2):
             # check both sites (keep track of polyhedra of same species using site)
                 # if either site is an image, record the connection is the original site's entry
 
+    # get the polyhedra in the central cell of the supercell from which to calculate connectivities, relabeling
+    # to differentiate between different sites with same cation species
+    center_cell_polyhedra = []
+    cation_iterators = {}
+    for polyhedra in polyhedra_list:
+        site_coords = polyhedra.get_central_site().frac_coords
+        if site_coords[0] >= (1.0/3)-1e-5 and site_coords[0] < (2.0/3)-1e-5:
+            if site_coords[1] >= (1.0/3)-1e-5 and site_coords[1] < (2.0/3)-1e-5:
+                if site_coords[2] >= (1.0/3)-1e-5 and site_coords[2] < (2.0/3)-1e-5  :
+                    if polyhedra.central_ion_name not in cation_iterators.keys():
+                        cation_iterators[polyhedra.central_ion_name] = 1
+                    else:
+                        cation_iterators[polyhedra.central_ion_name] += 1
+                    polyhedra.set_central_name(polyhedra.central_ion_name +
+                                               str(cation_iterators[polyhedra.central_ion_name]))
+                    center_cell_polyhedra.append(polyhedra)
 
+    # classify supercell polyhedra into center-cell polyhedra by checking whether they are images
+    for outer_polyhedra in polyhedra_list:
+        for inner_polyhedra in center_cell_polyhedra:
+            if check_image_in_supercell(outer_polyhedra.get_central_site(), inner_polyhedra.get_central_site()):
+                outer_polyhedra.set_central_name(inner_polyhedra.get_central_name())
+                break
+        print outer_polyhedra.get_central_name()
+
+    # instantiate nested dictionaries for connections
     connections = {}
-    for polyhedra1 in polyhedra_list:
-        cation = polyhedra1.get_central_name()
-        connected = False #keep track of whether a polyhedra is not connected to any other polyhedra
-        if not cation in connections.keys():
-            connections[cation] = [0,0,0,0]
-        for polyhedra2 in polyhedra_list:
-            connection = polyhedra1.get_connection(polyhedra2)
+    for cation_1 in center_cell_polyhedra:
+        connections[cation_1.central_ion_name] = {}
+        for cation_2 in center_cell_polyhedra:
+            connections[cation_1.central_ion_name][cation_2.central_ion_name] = {"point": 0, "edge": 0, "face": 0}
+
+    # count connections between specific polyhedra to create adjacency matrix
+    # matrix should be symmetric, i.e. connections between cation1 and cation2 should be the same as connections
+    # between cation2 and cation1
+    for inner_polyhedra in center_cell_polyhedra:
+        inner_cation = inner_polyhedra.get_central_name()
+        for outer_polyhedra in polyhedra_list:
+            outer_cation = outer_polyhedra.get_central_name()
+            connection = inner_polyhedra.get_connection(outer_polyhedra)
             if connection < 0:
                 continue
             if connection == 1:
-                connections[cation][1] += 1
-                connected = True
+                connections[inner_cation][outer_cation]["point"] += 1
             if connection == 2:
-                connections[cation][2] += 1
-                connected = True
+                connections[inner_cation][outer_cation]["edge"] += 1
             if connection >= 3:
-                connections[cation][3] += 1
-                connected = True
-        if connected == False:
-            connections[cation][0] += 1
+                connections[inner_cation][outer_cation]["face"] += 1
 
     return connections
 
 
+def check_image_in_supercell(site1, site2):
+    is_image = False
+    x1 = site1.frac_coords[0]
+    x2 = site2.frac_coords[0]
+    y1 = site1.frac_coords[1]
+    y2 = site2.frac_coords[1]
+    z1 = site1.frac_coords[2]
+    z2 = site2.frac_coords[2]
+    if round((x1 - x2) * 3, 5).is_integer() and round((y1 - y2) * 3, 5).is_integer() and round((z1 - z2) * 3, 5).is_integer():
+        is_image = True
 
-# original code
-def getAllCationPolyhedralWReflections(structure, margin = 0.05, radius = 3.0):
+    return is_image
 
-    anions = ['O2-', 'O', 'F-', 'F', 'Cl-', 'Cl', 'I-', 'I', 'Br-', 'Br', 'S2-', 'S']
-
-    cationSites = []
-    for site in structure.sites:
-        if not site.species_string in anions:
-            cationSites.append(site)
-    reflections = []
-    for site in cationSites:
-        reflections = reflections + checkReflections(site, margin)
-    useTemp = False
-    if len(reflections) > 0:
-        for site in reflections:
-            cationSites.append(site)
-        useTemp = True
-        tempspecies = []
-        tempfraccoords = []
-        for site in structure.sites:
-            tempspecies.append(site.species_string)
-            tempfraccoords.append(site.frac_coords)
-        for reflection in reflections:
-            tempspecies.append(reflection.species_string)
-            tempfraccoords.append(reflection.frac_coords)
-        tempstruct = Structure(structure.lattice, tempspecies, tempfraccoords)
-    if useTemp:
-        structure = tempstruct
-    print structure.formula
-    polyhedralList = [] #list of polyhedrals with cations at the center
-    for site in cationSites:
-        sites = [site] #list of sites that will be in polyhedral
-        anionSites = [] # list of all neighboring anions
-        bondlengths = [] #list of bondslengths of anions
-        bondweights = []
-        for entry in structure.get_neighbors(site, radius):
-            if entry[0].species_string in anions and entry[1] < radius:
-                # sites.append(entry)
-                anionSites.append(entry)
-                bondlengths.append(entry[1])
-
-        for bond in anionSites:
-            if site.species_string == 'Rn':
-                sites.append(bond)
-                bondweights.append(1.0)
-            else:
-                if calculate_bond_weight(bond[1], bondlengths) > 0: #do not count nearby anions that do not contribute
-                    sites.append(bond)
-                    bondweights.append(calculate_bond_weight(bond[1], bondlengths))
-                    #print bond
-        #print "next central site"
-        polyhedralList.append([sites, round(sum(bondweights))])
-        #polyhedralList.append(sites)
-            # list of polyhedral (-> list of list of sites) + coordnum
-
-    return polyhedralList
-
-def checkReflections(site, margin):
-    x = 0
-    y = 0
-    z = 0
-    reflections = []
-    toReflect = site
-    if toReflect.frac_coords[0] >= 0.0 and toReflect.frac_coords[0] <= margin:
-        x = 1
-    if toReflect.frac_coords[0] <= 1.0 and toReflect.frac_coords[0] >= 1.0 - margin:
-        x = -1
-    if toReflect.frac_coords[1] >= 0.0 and toReflect.frac_coords[1] <= margin:
-        y = 1
-    if toReflect.frac_coords[1] <= 1.0 and toReflect.frac_coords[1] >= 1.0 - margin:
-        y = -1
-    if toReflect.frac_coords[2] >= 0.0 and toReflect.frac_coords[2] <= margin:
-        z = 1
-    if toReflect.frac_coords[2] <= 1.0 and toReflect.frac_coords[2] >= 1.0 - margin:
-        z = -1
-
-    if x != 0:
-        reflections.append(PeriodicSite(site.species_string, site.frac_coords + [x*1.0, 0, 0],
-                                            site.lattice))
-        if y != 0:
-            reflections.append(PeriodicSite(site.species_string, site.frac_coords + [x*1.0, y*1.0, 0],
-                                                site.lattice))
-            if z != 0:
-                reflections.append(PeriodicSite(site.species_string, site.frac_coords + [x*1.0, y*1.0, z*1.0],
-                                                site.lattice))
-        if z != 0:
-            reflections.append(PeriodicSite(site.species_string, site.frac_coords + [x*1.0, 0, z*1.0],
-                                            site.lattice))
-
-    if y != 0:
-        reflections.append(PeriodicSite(site.species_string, site.frac_coords + [0, y*1.0, 0],
-                                            site.lattice))
-        if z != 0:
-            reflections.append(PeriodicSite(site.species_string, site.frac_coords + [0, y*1.0, z*1.0],
-                                                site.lattice))
-
-    if z != 0:
-        reflections.append(PeriodicSite(site.species_string, site.frac_coords + [0, 0, z*1.0],
-                                            site.lattice))
-
-    return reflections
 
 if __name__ == '__main__':
-    s = Structure.from_file('LiCoO2.cif', True, False)
+    s = Structure.from_file('Li5CoO4.cif', True, False)
     print s
-    print get_cation_polyhedra_for_connectivity(s)
+    print get_connectivity_matrix_2(s, 3.0)
+
