@@ -1,6 +1,15 @@
 from pymatgen.core.structure import Structure
 from structural_descriptors_repo import effective_coordination as ECoN
 from structural_descriptors_repo import okeeffe_coordination_number_from_structure as OKeeffe
+import unittest
+
+class TestCoordinationMethods(unittest.TestCase):
+
+    def setup(self):
+        self.assertEqual(1,1)
+
+    def test_1(self):
+        self.assertEqual(1, 1)
 
 if __name__ == '__main__':
     s = Structure.from_file('LiCoO2.cif', True, True)
