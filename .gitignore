@@ -1,5 +1,9 @@
+*.py[cod]
+
 # osx noise
 .DS_Store
+
+# PyCharm
 .idea
 profile
 

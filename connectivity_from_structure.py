@@ -32,6 +32,7 @@ class Polyhedra(object):
     """
 
     def __init__(self, cation, peripheralIons):
+        # TODO: document. What is the type of cation, e.g. is a Site object? Is peripheral ions a list of Sites?
         self.central_ion = cation
         self.central_ion_name = cation.species_string
         self.peripheral_ions = peripheralIons
@@ -40,24 +41,24 @@ class Polyhedra(object):
         for site in self.peripheral_ions:
             self.composition += site._species
 
-    def get_central_name(self):
+    def get_central_name(self):  # TODO: why is a name needed? Why not just use self.central_ion.species_string?
         return self.central_ion_name
 
-    def get_peripheral_sites(self):
+    def get_peripheral_sites(self): #TODO: a getter is NOT needed. The var peripheral_ions is already public
         return self.peripheral_ions
 
-    def get_central_site(self):
+    def get_central_site(self): #TODO: a getter is NOT needed. The var peripheral_ions is already public
         return self.central_ion
 
-    def set_central_name(self, new_name):
+    def set_central_name(self, new_name): #TODO: Why would someone wnat to rename the central_ion? Especially *after* constructing the object? Mutability is usually evil.
         self.central_ion_name = new_name
 
-    def get_connection(self, other):
+    def get_connection(self, other):  # TODO: probably rename this to get_num_connections or something
         """
         Gives the connectivity between the given polyhedra and another polyhedra by counting the number of atoms shared
         between the two polyhedra
 
-        :param polyhedra2: (Polyhedra) target Polyhedra against which we are checking for connectivity with the current
+        :param other: (Polyhedra) target Polyhedra against which we are checking for connectivity with the current
         polyhedra
         :return: (int) Integer giving the number of peripheral ions shared by the current polyhedra and the target
         polyhedra; returns -1 if the same polyhedra is being compared to itself
@@ -65,9 +66,9 @@ class Polyhedra(object):
         assert isinstance(other, Polyhedra)
 
         if self.central_ion == other.central_ion:
-            return -1
+            return -1  # TODO: better to raise a ValueError than return some nonsensical result. The user should decide how to handle errors, not you. Please see "Writing Better Code", Tip #9 (newly added) for more details
 
-        return len(self.get_connections(other))
+        return len(self.get_connections(other))  # TODO: this is the only line needed in this function. The other lines above are not needed, they are repeated in the function call.
 
     def get_connections(self, other):
         """
@@ -78,9 +79,9 @@ class Polyhedra(object):
         :return: (list) list of sites shared between the current Polyhedra and the given Polyhedra
         """
 
-        assert isinstance(other, Polyhedra)
+        assert isinstance(other, Polyhedra)  # TODO: this is difficult to explain, but typically you don't need this. Python also encourages duck typing rather than assertions of type
 
-        if self.central_ion == other.central_ion:
+        if self.central_ion == other.central_ion:  # TODO: it is not clear that this check will return True for two identical but different Polyhedra objects. You would need to first implement an __eq__ method.
             print "Checking connections between exact same polyhedra"
 
         shared_sites = []
@@ -91,7 +92,7 @@ class Polyhedra(object):
                     shared_sites.append(site)
         return shared_sites
 
-    def is_connected(self, other):
+    def is_connected(self, other):  # TODO: I don't think this is needed at all. You can just check the length of get_connection or even bool it. e.g., bool(get_connection)
         """
         Checks whether the current Polyhedra is connected to the given Polyhedra
         :param polyhedra2: (Polyhedra) target Polyhedra against which we are checking for connectivity with the current
@@ -112,7 +113,7 @@ class Polyhedra(object):
 
         return False
 
-    def get_peripheral_distances(self):
+    def get_peripheral_distances(self):  # TODO: not clear this needs to be a separate function, unless it is used in multiple place. Use as many methods/abstractions/functions as necessary, but don't use more than that.
         """
         Gives the distances between the central site and the peripheral ion sites (for determining bond weights)
 
@@ -128,7 +129,7 @@ class Polyhedra(object):
         return self.composition.formula
 
 
-def get_connection(polyhedra1, polyhedra2):
+def get_connection(polyhedra1, polyhedra2):  # TODO: this function is completely pointless
     """
     Determines whether two polyhedra are connected (i.e. if they share any peripheral ions)
 
@@ -140,7 +141,7 @@ def get_connection(polyhedra1, polyhedra2):
 
     return polyhedra1.get_connectivity(polyhedra2)
 
-    return connections
+    return connections  # TODO: you can't return after a return statement anyway
 
 
 def get_surrounding_connectivity(structure, polyhedra, radius):
@@ -174,7 +175,7 @@ def get_polyhedra(structure, site, radius=3.2):
     :param radius: (float) largest possible distance within which peripheral ions can be obtained
     :return: (Polyhedra) polyhedra object representing the polyhedra around the target site in the target structure
     """
-    anions = ['O2-', 'O', 'F-', 'F', 'Cl-', 'Cl', 'I-', 'I', 'Br-', 'Br', 'S2-', 'S']
+    anions = ['O2-', 'O', 'F-', 'F', 'Cl-', 'Cl', 'I-', 'I', 'Br-', 'Br', 'S2-', 'S']  # this should be a tuneable parameter
 
     anionSites = []
     bondlengths = []
@@ -413,7 +414,7 @@ def check_image_in_supercell(site1, site2):
 
 
 if __name__ == '__main__':
-    s = Structure.from_file('Li5CoO4.cif', True, False)
+    s = Structure.from_file('Li5CoO4.cif', True, False)  # TODO: don't choose an 80-atom structure that kills my computer as the test case. Let the user run a simple BCC Fe or something.
     print s
-    print get_connectivity_matrix_2(s, 3.0)
+    print get_connectivity_matrix_2(s, 3.0)  # TODO: this is completely eating my CPU. It prints nonsense like "Co8" repeated multiple times. The final output shows zero connections for almost all sites?
 
