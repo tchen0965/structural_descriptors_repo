@@ -32,28 +32,26 @@ class Polyhedra(object):
     """
 
     def __init__(self, cation, peripheralIons):
-        # TODO: document. What is the type of cation, e.g. is a Site object? Is peripheral ions a list of Sites?
+        """
+
+        :param cation: Site object representing the central cation
+        :param peripheralIons: list of Site objects representing the central cation's surrounding ions
+        """
+
         self.central_ion = cation
         self.central_ion_name = cation.species_string
         self.peripheral_ions = peripheralIons
+        self.cation_num = 1     # Number to identify unique cation site in center cell from other sites with same species
 
         self.composition = self.central_ion._species
         for site in self.peripheral_ions:
             self.composition += site._species
 
-    def get_central_name(self):  # TODO: why is a name needed? Why not just use self.central_ion.species_string?
-        return self.central_ion_name
 
-    def get_peripheral_sites(self): #TODO: a getter is NOT needed. The var peripheral_ions is already public
-        return self.peripheral_ions
+    def set_site_number(self, cation_number):
+        self.cation_num = cation_number
 
-    def get_central_site(self): #TODO: a getter is NOT needed. The var peripheral_ions is already public
-        return self.central_ion
-
-    def set_central_name(self, new_name): #TODO: Why would someone wnat to rename the central_ion? Especially *after* constructing the object? Mutability is usually evil.
-        self.central_ion_name = new_name
-
-    def get_connection(self, other):  # TODO: probably rename this to get_num_connections or something
+    def get_num_connections(self, other):
         """
         Gives the connectivity between the given polyhedra and another polyhedra by counting the number of atoms shared
         between the two polyhedra
@@ -63,12 +61,7 @@ class Polyhedra(object):
         :return: (int) Integer giving the number of peripheral ions shared by the current polyhedra and the target
         polyhedra; returns -1 if the same polyhedra is being compared to itself
         """
-        assert isinstance(other, Polyhedra)
-
-        if self.central_ion == other.central_ion:
-            return -1  # TODO: better to raise a ValueError than return some nonsensical result. The user should decide how to handle errors, not you. Please see "Writing Better Code", Tip #9 (newly added) for more details
-
-        return len(self.get_connections(other))  # TODO: this is the only line needed in this function. The other lines above are not needed, they are repeated in the function call.
+        return len(self.get_connections(other))
 
     def get_connections(self, other):
         """
@@ -79,10 +72,8 @@ class Polyhedra(object):
         :return: (list) list of sites shared between the current Polyhedra and the given Polyhedra
         """
 
-        assert isinstance(other, Polyhedra)  # TODO: this is difficult to explain, but typically you don't need this. Python also encourages duck typing rather than assertions of type
-
-        if self.central_ion == other.central_ion:  # TODO: it is not clear that this check will return True for two identical but different Polyhedra objects. You would need to first implement an __eq__ method.
-            print "Checking connections between exact same polyhedra"
+        if self == other:
+            raise ValueError('Checking connections between exact same polyhedra')
 
         shared_sites = []
 
@@ -92,59 +83,30 @@ class Polyhedra(object):
                     shared_sites.append(site)
         return shared_sites
 
-    def is_connected(self, other):  # TODO: I don't think this is needed at all. You can just check the length of get_connection or even bool it. e.g., bool(get_connection)
-        """
-        Checks whether the current Polyhedra is connected to the given Polyhedra
-        :param polyhedra2: (Polyhedra) target Polyhedra against which we are checking for connectivity with the current
-        polyhedra
-        :return: (boolean) Whether the two Polyhedra have any shared peripheralIons
+    def __eq__(self, other):
         """
 
-        assert isinstance(other, Polyhedra)
-
+        :param other: another Polyhedra
+        :return: true is the central ion site of the current polyhedra is the same as the other polyhedra
+        """
         if self.central_ion == other.central_ion:
-            print "Checking connections between exact same polyhedra"
+            return True
+        else:
+            return False
 
-        for site in other.peripheralIons:
-            for c_site in self.peripheralIons:
-                if c_site == site:
-                    return True
-                    break
-
-        return False
-
-    def get_peripheral_distances(self):  # TODO: not clear this needs to be a separate function, unless it is used in multiple place. Use as many methods/abstractions/functions as necessary, but don't use more than that.
-        """
-        Gives the distances between the central site and the peripheral ion sites (for determining bond weights)
-
-        :return: (list) list of distances between the central ion site and the peripheral ion sites
-        """
-        peripheral_distances = []
-        for peripheral in self.peripheral_ions:
-            peripheral_distances.append(peripheral.distance(self.central_ion))
-
-        return peripheral_distances
 
     def __str__(self):
-        return self.composition.formula
+        """
+        List of properties of the polyhedra: central species name, central species site, list of peripheral ions of
+        the polyhedra
+        """
+
+        return str([self.central_ion_name,
+                    [self.central_ion.frac_coords[0], self.central_ion.frac_coords[1], self.central_ion.frac_coords[2]],
+                    self.peripheral_ions])
 
 
-def get_connection(polyhedra1, polyhedra2):  # TODO: this function is completely pointless
-    """
-    Determines whether two polyhedra are connected (i.e. if they share any peripheral ions)
-
-    :param polyhedra1: (Polyhedra) target polyhedra
-    :param polyhedra2: (Polyhedra) target polyhedra we're getting connectivity with polyhedra1
-    :return: (int) Integer giving the number of peripheral ions shared by the current polyhedra and the target
-    polyhedra; returns -1 if the same polyhedra is being compared to itself
-    """
-
-    return polyhedra1.get_connectivity(polyhedra2)
-
-    return connections  # TODO: you can't return after a return statement anyway
-
-
-def get_surrounding_connectivity(structure, polyhedra, radius):
+def get_surrounding_connectivity(structure, polyhedra, radius, peripheral_species):
     """
     Gives the surrounding connectivity of a specific polyhedra in a given structure
 
@@ -154,17 +116,17 @@ def get_surrounding_connectivity(structure, polyhedra, radius):
     of the list are of the form: [[polyhedra, connection], ...]
     """
 
-    polyhedraList = get_supercell_polyhedra(structure, radius)
+    polyhedraList = get_supercell_polyhedra(structure, radius, peripheral_species)
 
     connectedPolyhedra = []
     for otherPolyhedra in polyhedraList:
-        connection = polyhedra.get_connection(otherPolyhedra)
+        connection = polyhedra.get_num_connections(otherPolyhedra)
         if connection > 0:
             connectedPolyhedra.append([otherPolyhedra, connection])
 
     return connectedPolyhedra
 
-def get_polyhedra(structure, site, radius=3.2):
+def get_polyhedra(structure, site, peripheral_species, radius=2.8):
     """
     Gives a polyhedra in a structure based on the site, where nearby atoms are considered peripheral ions to the site
     if their bond weights (as defined by Hoppe, 1979) are greater than given value (i.e. the atoms contribute to the
@@ -172,29 +134,32 @@ def get_polyhedra(structure, site, radius=3.2):
 
     :param structure: (Structure) target structure
     :param site: (PeriodicSite) target site
+    :param peripheral_species: (list of Strings) List of strings with species names of the ions that can be peripheral
+    ions
     :param radius: (float) largest possible distance within which peripheral ions can be obtained
     :return: (Polyhedra) polyhedra object representing the polyhedra around the target site in the target structure
     """
-    anions = ['O2-', 'O', 'F-', 'F', 'Cl-', 'Cl', 'I-', 'I', 'Br-', 'Br', 'S2-', 'S']  # this should be a tuneable parameter
+    #anions = ['O2-', 'O', 'F-', 'F', 'Cl-', 'Cl', 'I-', 'I', 'Br-', 'Br', 'S2-', 'S']  # this should be a tuneable parameter
 
     anionSites = []
     bondlengths = []
     peripheralSites = []
 
     for entry in structure.get_neighbors(site, radius):
-        if entry[0].species_string in anions and entry[1] < radius:
-            anionSites.append(entry[0])
-            bondlengths.append(entry[1])
+        if entry[1] < radius:
+            if entry[0].species_string in peripheral_species:
+                anionSites.append(entry[0])
+                bondlengths.append(entry[1])
     for potentialPeripheralIons in anionSites:
-        #do not count nearby anions that do not contribute
-        if effective_coordination.calculate_bond_weight(potentialPeripheralIons[1], bondlengths) > 1e-2:
+        #do not count nearby ions that do not contribute
+        if effective_coordination.calculate_bond_weight(potentialPeripheralIons[1], bondlengths) > 0.5:
             peripheralSites.append(potentialPeripheralIons)
 
     return Polyhedra(site, peripheralSites)
 
 
 
-def count_connectivity(structure, radius = 3.2):
+def count_connectivity(structure, radius = 2.8):
 
     """
 
@@ -214,22 +179,22 @@ def count_connectivity(structure, radius = 3.2):
     # Get the polyhedra in the central cell of the supercell from which to calculate connectivities
     center_cell_polyhedra = []
     for polyhedra in polyhedra_list:
-        site_coords = polyhedra.get_central_site().frac_coords
-        if site_coords[0] >= (1.0/3)-1e-5 and site_coords[0] < (2.0/3):
-            if site_coords[1] >= (1.0/3)-1e-5 and site_coords[1] < (2.0/3):
-                if site_coords[2] >= (1.0/3)-1e-5 and site_coords[2] < (2.0/3):
+        site_coords = polyhedra.central_ion.frac_coords
+        if site_coords[0] >= (1.0/3)-(1e-5) and site_coords[0] < (2.0/3):
+            if site_coords[1] >= (1.0/3)-(1e-5) and site_coords[1] < (2.0/3):
+                if site_coords[2] >= (1.0/3)-(1e-5) and site_coords[2] < (2.0/3):
                     center_cell_polyhedra.append(polyhedra)
 
 
     # Count the number of connections between the
     connections = {}
     for polyhedra1 in center_cell_polyhedra:
-        cation = polyhedra1.get_central_name()
+        cation = polyhedra1.central_ion_name
         connected = False #keep track of whether a polyhedra is not connected to any other polyhedra
         if not cation in connections.keys():
             connections[cation] = {"none": 0, "point": 0,"edge": 0, "face": 0}
         for polyhedra2 in polyhedra_list:
-            connection = polyhedra1.get_connection(polyhedra2)
+            connection = polyhedra1.get_num_connections(polyhedra2)
             if connection < 0:
                 continue
             if connection == 1:
@@ -246,29 +211,37 @@ def count_connectivity(structure, radius = 3.2):
 
     return connections
 
-def get_supercell_polyhedra(structure, radius = 3.2):
+def get_supercell_polyhedra(structure, radius, peripheral_species, central_species = []):
     """
     Obtains all cation polyhedra needed to describe connectivity by creating a supercell and converting sites in the
     structure to cation polyhedra (peripheral ions of the polyhedra given by the
 
     :param structure: (Structure) target structure
     :param radius: (float) radius within which to determine whether a nearby atom is a peripheral ion
+    :param peripheral_species: (list of Strings) List of strings with species names of the ions that can be peripheral
+    ions
+    :param central_species: (list of Strings) List of strings with species names of the ions that can be central ions;
+    if there are no central species specified, then we consider all ions not in the list of peripheral ions to be
+    central species
     :return: (list) list of Polyhedra objects in supercell large enough to determine connectivities between polyhedra
     """
 
-    anions = ['O2-', 'O', 'F-', 'F', 'Cl-', 'Cl', 'I-', 'I', 'Br-', 'Br', 'S2-', 'S']
-
-    structure.make_supercell((3, 3, 3))
+    structure.make_supercell((6, 6, 6))
 
     polyhedra = []
-    for site_index in range(structure.num_sites):
-        if structure[site_index].species_string not in anions:
-            polyhedra.append(get_polyhedra(structure, structure[site_index]))
+    if len(central_species) == 0:
+        for site_index in range(structure.num_sites):
+            if structure[site_index].species_string not in peripheral_species:
+                polyhedra.append(get_polyhedra(structure, structure[site_index], peripheral_species, radius))
+    else:
+        for site_index in range(structure.num_sites):
+            if structure[site_index].species_string in central_species:
+                polyhedra.append(get_polyhedra(structure, structure[site_index], peripheral_species, radius))
 
     return polyhedra
 
 
-def get_connectivity_matrix(structure, radius = 3.2):
+def get_connectivity_matrix(structure, radius = 2.8, peripheral_species=['O2-', 'O', 'F-', 'F', 'Cl-', 'Cl', 'I-', 'I', 'Br-', 'Br', 'S2-', 'S'], central_species = []):
     """
     Creates a connectivity matrix to describe the connectivity between cations in a structure; connections between
     cation polyhedra and reflections of itself (and reflections of other cation polyhedra) are also counted; different
@@ -277,24 +250,29 @@ def get_connectivity_matrix(structure, radius = 3.2):
 
     :param structure: (Structure) target structure
     :param radius: (float) radius within which to determine whether a nearby atom is a peripheral ion
+    :param peripheral_species: (list of Strings) List of strings with species names of the ions that can be peripheral
+    ions
+    :param central_species: (list of Strings) List of strings with species names of the ions that can be central ions;
+    if there are no central species specified, then we consider all ions not in the list of peripheral ions to be
+    central species
     :return: (dict) dictionary of dictionaries, with the first set of keys being the specified (unreflected) Polyhedra
     sites, the second (inner) set of keys being the specified (unreflected) Polyhedra sites which we are comparing
     connectivity to, and the values being a list [x, y, z] which give the numbers of [point-sharing, edge-sharing, and
     face-sharing] instances between the first Polyhedra and all of the reflections of the second Polyhedra
     """
 
-    polyhedra_list = get_supercell_polyhedra(structure, radius)
+    polyhedra_list = get_supercell_polyhedra(structure, radius, peripheral_species, central_species)
 
     # get the polyhedra in the central cell of the supercell from which to calculate connectivities
     center_cell_polyhedra = []
     cation_names = []
     for polyhedra in polyhedra_list:
-        site_coords = polyhedra.get_central_site().frac_coords
-        if site_coords[0] >= (1.0/3)-1e-5 and site_coords[0] < (2.0/3)-1e-5:
-            if site_coords[1] >= (1.0/3)-1e-5 and site_coords[1] < (2.0/3)-1e-5:
-                if site_coords[2] >= (1.0/3)-1e-5 and site_coords[2] < (2.0/3)-1e-5:
+        site_coords = polyhedra.central_ion.frac_coords
+        if site_coords[0] >= (1.0/2)-(1e-5) and site_coords[0] < (2.0/3)-1e-5:
+            if site_coords[1] >= (1.0/2)-(1e-5) and site_coords[1] < (2.0/3)-1e-5:
+                if site_coords[2] >= (1.0/2)-(1e-5) and site_coords[2] < (2.0/3)-1e-5:
                     center_cell_polyhedra.append(polyhedra)
-                    cation_names.append(polyhedra.get_central_name())
+                    cation_names.append(polyhedra.central_ion_name)
 
     # instantiate nested dictionaries for connections
     connections = {}
@@ -307,23 +285,23 @@ def get_connectivity_matrix(structure, radius = 3.2):
     # matrix should be symmetric, i.e. connections between cation1 and cation2 should be the same as connections
     # between cation2 and cation1
     for inner_polyhedra in center_cell_polyhedra:
-        inner_cation = inner_polyhedra.get_central_name()
+        inner_cation = inner_polyhedra.central_ion_name
+        #print inner_cation
         for outer_polyhedra in polyhedra_list:
-            outer_cation = outer_polyhedra.get_central_name()
-            connection = inner_polyhedra.get_connection(outer_polyhedra)
-            if connection < 0:
+            outer_cation = outer_polyhedra.central_ion_name
+            if inner_polyhedra == outer_polyhedra:
                 continue
+            connection = inner_polyhedra.get_num_connections(outer_polyhedra)
             if connection == 1:
                 connections[inner_cation][outer_cation]["point"] += 1
             if connection == 2:
                 connections[inner_cation][outer_cation]["edge"] += 1
             if connection >= 3:
                 connections[inner_cation][outer_cation]["face"] += 1
-        break
 
     return connections
 
-def get_connectivity_matrix_2(structure, radius = 3.2):
+def get_connectivity_matrix_2(structure, radius = 2.8, peripheral_species=['O2-', 'O', 'F-', 'F', 'Cl-', 'Cl', 'I-', 'I', 'Br-', 'Br', 'S2-', 'S'], central_species=[]):
 
     """
     Creates a connectivity matrix to describe the connectivity between cations in a structure; connections between
@@ -333,13 +311,18 @@ def get_connectivity_matrix_2(structure, radius = 3.2):
 
     :param structure: (Structure) target structure
     :param radius: (float) radius within which to determine whether a nearby atom is a peripheral ion
+    :param peripheral_species: (list of Strings) List of strings with species names of the ions that can be peripheral
+    ions
+    :param central_species: (list of Strings) List of strings with species names of the ions that can be central ions;
+    if there are no central species specified, then we consider all ions not in the list of peripheral ions to be
+    central species
     :return: (dict) dictionary of dictionaries, with the first set of keys being the specified (unreflected) Polyhedra
     sites, the second (inner) set of keys being the specified (unreflected) Polyhedra sites which we are comparing
     connectivity to, and the values being a list [x, y, z] which give the numbers of [point-sharing, edge-sharing, and
     face-sharing] instances between the first Polyhedra and all of the reflections of the second Polyhedra
     """
 
-    polyhedra_list = get_supercell_polyhedra(structure, radius)
+    polyhedra_list = get_supercell_polyhedra(structure, radius, peripheral_species, central_species)
 
     # for all polyhedra in list
         # for all polyhedra in list
@@ -352,43 +335,44 @@ def get_connectivity_matrix_2(structure, radius = 3.2):
     center_cell_polyhedra = []
     cation_iterators = {}
     for polyhedra in polyhedra_list:
-        site_coords = polyhedra.get_central_site().frac_coords
-        if site_coords[0] >= (1.0/3)-1e-5 and site_coords[0] < (2.0/3)-1e-5:
-            if site_coords[1] >= (1.0/3)-1e-5 and site_coords[1] < (2.0/3)-1e-5:
-                if site_coords[2] >= (1.0/3)-1e-5 and site_coords[2] < (2.0/3)-1e-5  :
+        site_coords = polyhedra.central_ion.frac_coords
+        if site_coords[0] >= (1.0/2)-1e-5 and site_coords[0] < (2.0/3)-1e-5:
+            if site_coords[1] >= (1.0/2)-1e-5 and site_coords[1] < (2.0/3)-1e-5:
+                if site_coords[2] >= (1.0/2)-1e-5 and site_coords[2] < (2.0/3)-1e-5  :
                     if polyhedra.central_ion_name not in cation_iterators.keys():
                         cation_iterators[polyhedra.central_ion_name] = 1
                     else:
                         cation_iterators[polyhedra.central_ion_name] += 1
-                    polyhedra.set_central_name(polyhedra.central_ion_name +
-                                               str(cation_iterators[polyhedra.central_ion_name]))
+                    polyhedra.set_site_number(cation_iterators[polyhedra.central_ion_name])
                     center_cell_polyhedra.append(polyhedra)
+
 
     # classify supercell polyhedra into center-cell polyhedra by checking whether they are images
     for outer_polyhedra in polyhedra_list:
         for inner_polyhedra in center_cell_polyhedra:
-            if check_image_in_supercell(outer_polyhedra.get_central_site(), inner_polyhedra.get_central_site()):
-                outer_polyhedra.set_central_name(inner_polyhedra.get_central_name())
+            if check_image_in_supercell(outer_polyhedra.central_ion, inner_polyhedra.central_ion):
+                outer_polyhedra.set_site_number(inner_polyhedra.cation_num)
                 break
-        print outer_polyhedra.get_central_name()
 
     # instantiate nested dictionaries for connections
     connections = {}
     for cation_1 in center_cell_polyhedra:
-        connections[cation_1.central_ion_name] = {}
+        cation_1_unique_site_name = cation_1.central_ion_name + str(cation_1.cation_num)
+        connections[cation_1_unique_site_name] = {}
         for cation_2 in center_cell_polyhedra:
-            connections[cation_1.central_ion_name][cation_2.central_ion_name] = {"point": 0, "edge": 0, "face": 0}
+            cation_2_unique_site_name = cation_2.central_ion_name + str(cation_2.cation_num)
+            connections[cation_1_unique_site_name][cation_2_unique_site_name] = {"point": 0, "edge": 0, "face": 0}
 
     # count connections between specific polyhedra to create adjacency matrix
     # matrix should be symmetric, i.e. connections between cation1 and cation2 should be the same as connections
     # between cation2 and cation1
     for inner_polyhedra in center_cell_polyhedra:
-        inner_cation = inner_polyhedra.get_central_name()
+        inner_cation = inner_polyhedra.central_ion_name + str(inner_polyhedra.cation_num)
         for outer_polyhedra in polyhedra_list:
-            outer_cation = outer_polyhedra.get_central_name()
-            connection = inner_polyhedra.get_connection(outer_polyhedra)
-            if connection < 0:
+            outer_cation = outer_polyhedra.central_ion_name + str(outer_polyhedra.cation_num)
+            if inner_polyhedra == outer_polyhedra:
                 continue
+            connection = inner_polyhedra.get_num_connections(outer_polyhedra)
             if connection == 1:
                 connections[inner_cation][outer_cation]["point"] += 1
             if connection == 2:
@@ -414,7 +398,47 @@ def check_image_in_supercell(site1, site2):
 
 
 if __name__ == '__main__':
-    s = Structure.from_file('Li5CoO4.cif', True, False)  # TODO: don't choose an 80-atom structure that kills my computer as the test case. Let the user run a simple BCC Fe or something.
-    print s
-    print get_connectivity_matrix_2(s, 3.0)  # TODO: this is completely eating my CPU. It prints nonsense like "Co8" repeated multiple times. The final output shows zero connections for almost all sites?
+
+    # For some reason, can only get one connectivity matrix at a time or else the next connectivity matrix takes
+    # a very long time to obtain (don't know if it's for it to finish)
+    print "Testing on BCC Fe"
+    print "Note: for this situation, where the central ion's peripheral ions is the same species as the ion itself, " \
+          "we need to specify both the central species and the peripheral species\n"
+    s1 = Structure.from_file('Fe.cif', True, False)
+    print s1
+    central_species = ['Fe']
+    peripheral_species = ['Fe']
+    print get_connectivity_matrix(s1, 2.8, peripheral_species, central_species)
+    print ""
+
+    """
+    print "Testing on CaF2"
+    s2 = Structure.from_file('CaF2.cif', True, False)
+    print s2
+    print ""
+    print "Identifying connectivity between Ca-centered polyhedra"
+    central_species = ['Ca']
+    peripheral_species = ['F']
+    print get_connectivity_matrix(s2, 2.8, peripheral_species, central_species)
+    print ""
+
+    central_species = ['F']
+    peripheral_species = ['Ca']
+    print "Identifying connectivity between F-centered polyhedra"
+    print get_connectivity_matrix(s2, 2.8, peripheral_species, central_species)
+    print ""
+    print "Identifying connectivity between F-centered polyhedra, distinguishing between the two different sites in the" \
+          " structure"
+    print get_connectivity_matrix_2(s2, 2.8, peripheral_species, central_species)
+    print ""
+
+
+    print "Testing on LiCoO2"
+    print "Note: default value for peripheral species is " \
+          "['O2-', 'O', 'F-', 'F', 'Cl-', 'Cl', 'I-', 'I', 'Br-', 'Br', 'S2-', 'S']"
+    print "Default value for central species is all species in the material that are not a peripheral species"
+    s3 = Structure.from_file('LiCoO2.cif', True, False)
+    print s3
+    print get_connectivity_matrix(s3, 2.8)
+    """
 
