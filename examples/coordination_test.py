@@ -3,9 +3,10 @@ from structural_descriptors_repo import effective_coordination as ECoN
 from structural_descriptors_repo import okeeffe_coordination_number_from_structure as OKeeffe
 import unittest
 
+# TODO: make real unit tests!!
 class TestCoordinationMethods(unittest.TestCase):
 
-    def setup(self):
+    def setUp(self):
         self.assertEqual(1,1)
 
     def test_1(self):
