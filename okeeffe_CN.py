@@ -12,13 +12,10 @@ cation-centered polyhedral in the structure, calculates the bond weight for each
 polyhedral, and sums up the bond weights to obtain the effective coordination number for each polyhedral. It then
 averages the effective coordination of all polyhedral with the same cation at the central site.
 
-TO-DO: Change method of getting Voronoi structures from substructures_from_structure to Pymatgen's
-VoronoiCoordFinder (need to figure out how to import from Pymatgen for Github)
-
 """
 
 
-def getAvgCN(structure):
+def get_avg_CN(structure):
     """
 
     Get average O'Keeffe coordination number for all cations in structure
@@ -31,7 +28,7 @@ def getAvgCN(structure):
     cationsAlreadySeen = {}
     listCN = {}
     for substruct in substructList:
-        cation = substruct.central_ion
+        cation = substruct.central_subspecies.specie.symbol
         if not cation in cationsAlreadySeen.keys():
             cationsAlreadySeen[cation] = 0
             listCN[cation] = [substruct.weight_sum()]

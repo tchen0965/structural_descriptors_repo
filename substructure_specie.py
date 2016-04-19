@@ -23,7 +23,7 @@ class SubStructureSpecie(MSONable):
 
     """
     An extension of species to incorporate solid angle weights
-    No-coordinates are necesarry
+    No coordinates are necessary
     """
 
     def __init__(self, symbol, oxidation_state=0.0, weight=1.0, properties=None):

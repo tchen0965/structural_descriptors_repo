@@ -31,7 +31,7 @@ class EffectiveCoordFinder(object):
         #else:
         #    self._target = target
 
-    def getAvgCN(self, radius):
+    def get_avg_CN(self, radius=3.0, anions = ['O2-', 'O', 'F-', 'F', 'Cl-', 'Cl', 'I-', 'I', 'Br-', 'Br', 'S2-', 'S']):
         """
         Get the average coordination for all cations in structure.
 
@@ -40,7 +40,7 @@ class EffectiveCoordFinder(object):
         :return: (dict) A dictionary with keys corresponding to different cations and the values to the cation's ECoN
             coordination number averaged over all polyhedra with the same cation center in the structure
         """
-        cationCNs = self.get_cation_CN(radius)
+        cationCNs = self.get_cation_CN(radius, anions)
 
         avgCNs = {}
         for cation in cationCNs.keys():
@@ -49,7 +49,7 @@ class EffectiveCoordFinder(object):
         return avgCNs
 
 
-    def get_cation_CN(self, radius = 3.0):
+    def get_cation_CN(self, radius = 3.0, anions = ['O2-', 'O', 'F-', 'F', 'Cl-', 'Cl', 'I-', 'I', 'Br-', 'Br', 'S2-', 'S']):
         """
         Get all cation-centered polyhedra for a structure
 
@@ -58,8 +58,6 @@ class EffectiveCoordFinder(object):
         :return: (dict) A dictionary with keys corresponding to different cations and the values to the cation's
             ECoN coordination numbers
         """
-
-        anions = ['O2-', 'O', 'F-', 'F', 'Cl-', 'Cl', 'I-', 'I', 'Br-', 'Br', 'S2-', 'S']
 
         # pick out all sites with cations (not just "cation") as the species at the site
         cationSites = []
@@ -79,7 +77,7 @@ class EffectiveCoordFinder(object):
                     bondlengths.append(entry[1])
 
             for bond in anionSites:
-                if calculate_bond_weight(bond[1], bondlengths) > 10.0**-5: #do not count nearby anions that do not contribute
+                if calculate_bond_weight(bond[1], bondlengths) > 10e-5: #do not count nearby anions that do not contribute
                     sites[site.species_string].append(bond)
                     bondweights.append(calculate_bond_weight(bond[1], bondlengths))
 
@@ -98,10 +96,12 @@ def get_effective_CN(polyhedra):
     :return: (float) Effective coordination number of the polyhedra as given by Hoppe, 1979
     """
     bondweights = []
-    for peripheral in polyhedra.get_peripheral_sites():
-        bondlength = calculate_bond_weight(peripheral.distance(polyhedra.get_central_site()))
-        if calculate_bond_weight(bondlength, polyhedra.get_peripheral_distances()) > 10.0**-5:
-            bondweights.append(bondlength)
+    bondlengths = []
+    for peripheral in polyhedra.peripheral_ions:
+        bondlengths.append(peripheral.distance(polyhedra.central_ion))
+    for peripheral in polyhedra.peripheral_ions:
+        bondweight = calculate_bond_weight(peripheral.distance(polyhedra.central_ion), bondlengths)
+        bondweights.append(bondweight)
 
     return sum(bondweights)
 
