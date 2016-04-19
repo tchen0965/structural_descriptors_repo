@@ -33,8 +33,6 @@ class TestCoordinationMethods(unittest.TestCase):
         for cation in CNs:
             self.assertEqual(cation, "Fe", "Only cation in BCC Fe should be Fe")
             self.assertAlmostEqual(CNs[cation], 8, 1, "Fe should be, on average, 8-fold coordinated in BCC Fe")
-            print cation
-            print CNs[cation]
 
 
     def test_ECoN_CaF2(self):

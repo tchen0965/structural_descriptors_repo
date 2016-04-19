@@ -332,7 +332,7 @@ def check_image_in_supercell(site1, site2, supercell_size):
     return is_image
 
 
-def get_connectivity_matrix(structure, sites_diff, radius = 2.8, peripheral_species=['O2-', 'O', 'F-', 'F', 'Cl-', 'Cl', 'I-', 'I', 'Br-', 'Br', 'S2-', 'S'], central_species = []):
+def get_connectivity_matrix(structure, sites_diff, radius=2.8, peripheral_species=None, central_species=None):
     """
     Creates a connectivity matrix to describe the connectivity between cations in a structure; connections between
     cation polyhedra and reflections of itself (and reflections of other cation polyhedra) are also counted; different
@@ -352,6 +352,11 @@ def get_connectivity_matrix(structure, sites_diff, radius = 2.8, peripheral_spec
     face-sharing] instances between the first Polyhedra and all of the reflections of the second Polyhedra
     :return: (list of Polyhedra) list of all Polyhedra in the super cell
     """
+
+    if peripheral_species is None:
+        peripheral_species = ['O2-', 'O', 'F-', 'F', 'Cl-', 'Cl', 'I-', 'I', 'Br-', 'Br', 'S2-', 'S']
+    if central_species is None:
+        central_species = []
 
     # identify supercell size (3x3x3 vs. 6x6x6) needed to calculate connectivities based on size of polyhedra
     supercell_size = get_supercell_size(structure, radius, peripheral_species, central_species)
@@ -612,15 +617,7 @@ def get_surrounding_connectivity(structure, polyhedra, radius=2.8, peripheral_sp
 
 if __name__ == '__main__':
 
-<<<<<<< HEAD
 
-=======
-    # For some reason, can only get one connectivity matrix at a time or else the next connectivity matrix takes
-    # a very long time to obtain (don't know if it's for it to finish)
-    # TODO: regarding the comment above, see my note on default mutable args for peripheral_species and central_species
-
-    # TODO: make these into unit tests
->>>>>>> origin/master
     print "Testing on BCC Fe"
     print "Note: for this situation, where the central ion's peripheral ions is the same species as the ion itself, " \
           "we need to specify both the central species and the peripheral species\n"
