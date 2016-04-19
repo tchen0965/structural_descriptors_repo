@@ -82,7 +82,7 @@ class TestCoordinationMethods(unittest.TestCase):
     def test_ECoN_on_polyhedra(self):
         """Test Routine ECoN for single Polyhedra"""
 
-        LiCoO2Matrix, LiCoO2Polyhedra = connectivity.get_connectivity_matrix(self.LiCoO2Structure)
+        LiCoO2Matrix, LiCoO2Polyhedra = connectivity.get_connectivity_matrix(self.LiCoO2Structure, False)
         for polyhedra in LiCoO2Polyhedra:
             if polyhedra.central_ion_name == "Li":
                 testPoly = polyhedra
