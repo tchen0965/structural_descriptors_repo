@@ -413,6 +413,13 @@ def get_connectivity_matrix(structure, sites_diff, radius = 2.8, peripheral_spec
 """
 def get_connectivity_matrix_sites_diff(structure, sites_diff, radius = 2.8, peripheral_species=['O2-', 'O', 'F-', 'F', 'Cl-', 'Cl', 'I-', 'I', 'Br-', 'Br', 'S2-', 'S'], central_species=[]):
 
+<<<<<<< HEAD
+=======
+# TODO: using list as peripheral_species is a common Python "Gotcha!" Please look it up and fix.
+# TODO: same thing with central_species
+
+def get_connectivity_matrix_2(structure, radius = 2.8, peripheral_species=['O2-', 'O', 'F-', 'F', 'Cl-', 'Cl', 'I-', 'I', 'Br-', 'Br', 'S2-', 'S'], central_species=[]):
+>>>>>>> origin/master
 
     Creates a connectivity matrix to describe the connectivity between cations in a structure; connections between
     cation polyhedra and reflections of itself (and reflections of other cation polyhedra) are also counted; different
@@ -605,7 +612,15 @@ def get_surrounding_connectivity(structure, polyhedra, radius=2.8, peripheral_sp
 
 if __name__ == '__main__':
 
+<<<<<<< HEAD
 
+=======
+    # For some reason, can only get one connectivity matrix at a time or else the next connectivity matrix takes
+    # a very long time to obtain (don't know if it's for it to finish)
+    # TODO: regarding the comment above, see my note on default mutable args for peripheral_species and central_species
+
+    # TODO: make these into unit tests
+>>>>>>> origin/master
     print "Testing on BCC Fe"
     print "Note: for this situation, where the central ion's peripheral ions is the same species as the ion itself, " \
           "we need to specify both the central species and the peripheral species\n"

@@ -6,9 +6,11 @@ from structural_descriptors_repo import connectivity_from_structure as connectiv
 from structural_descriptors_repo import okeeffe_CN as OKeeffe
 import unittest
 
+# TODO: make real unit tests!!
 class TestCoordinationMethods(unittest.TestCase):
 
     def setUp(self):
+
         """Loading structures before tests"""
         #print "TestCoordinationMethods:setUp_"
         print "Loading structures from file"
@@ -60,7 +62,6 @@ class TestCoordinationMethods(unittest.TestCase):
             self.assertEqual(cation, "Fe", "Only cation in BCC Fe should be Fe")
             self.assertIsInstance(CNs[cation], float, "Averaged cation should be a float")
 
-        self.assertEqual(1, 1)
 
     def test_OKeeffe_CaF2(self):
         """Test Routine O'Keeffe CN for CaF2"""
@@ -95,21 +96,5 @@ class TestCoordinationMethods(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    """
-    s = Structure.from_file('LiCoO2.cif', True, True)
-
-    print "Example structure: LiCoO2"
-    print s
-    print ""
-
-    print "Average effective coordination number given by 3.2 angstrom radius for each cation"
-    finder = ECoN.EffectiveCoordFinder(s)
-    print finder.getAvgCN(3.2)
-    print ""
-
-    print "Average O'Keeffe coordination number for each cation"
-    print OKeeffe.getAvgCN(s)
-    print ""
-    """
-
+    
     unittest.main()
