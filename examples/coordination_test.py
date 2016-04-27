@@ -6,7 +6,8 @@ from structural_descriptors_repo import connectivity_from_structure as connectiv
 from structural_descriptors_repo import okeeffe_CN as OKeeffe
 import unittest
 
-# TODO: make real unit tests!!
+# TODO: see comments on other unit tests about naming, strong tests, etc. and apply here
+
 class TestCoordinationMethods(unittest.TestCase):
 
     def setUp(self):

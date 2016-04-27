@@ -4,13 +4,15 @@ __contributor__ = 'Anubhav Jain'
 
 from pymatgen import Structure
 from pymatgen import PeriodicSite
-import effective_coordination as ECoN
+import effective_coordination as ECoN  # TODO: use selective imports, ie. "from X import Y". PyCharm will help you do this quickly and automatically.
 from pymatgen.analysis.structure_analyzer import VoronoiCoordFinder
 from itertools import combinations
 import math
 import numpy
 import re
 
+# TODO: please talk to me about overall code organization
+# TODO: please talk to me about adding a README file that shows you how to use the library
 
 """
 Finds the connectivities between polyhedra within a structure, where we define connectivity by the number of shared
@@ -491,6 +493,7 @@ def get_connectivity_matrix_2(structure, radius = 2.8, peripheral_species=['O2-'
     return connections, polyhedra_list
 """
 
+# TODO: please discuss the method below with me. It should not require setting a radius or anions. The user should be able to provide an appropriate object and this should just take care of describing that object. It should not start analyzing the structure using its own choice of algorithms...
 def get_connectivity_description(connectivity_matrix, polyhedra, structure, sites_diff, radius=2.8, anions=['O2-', 'O', 'F-', 'F', 'Cl-', 'Cl', 'I-', 'I', 'Br-', 'Br', 'S2-', 'S']):
     """
     Writes a verbal description of the connectivity between cations in a structure; connections between cation
@@ -580,6 +583,7 @@ def get_connectivity_description_sites_diff(connectivity_matrix, polyhedra):
 """
 
 
+# TODO: Mutable default args! please *actually* fix this everywhere
 def get_surrounding_connectivity(structure, polyhedra, radius=2.8, peripheral_species=['O2-', 'O', 'F-', 'F', 'Cl-', 'Cl', 'I-', 'I', 'Br-', 'Br', 'S2-', 'S'], central_species = []):
     """
     Gives the surrounding connectivity of a specific polyhedra in a given structure
@@ -617,6 +621,7 @@ def get_surrounding_connectivity(structure, polyhedra, radius=2.8, peripheral_sp
 
 if __name__ == '__main__':
 
+    # TODO: is this code needed? You have the unit tests already or should make these into unit tests. If you want, you can add a DEBUG parameter at the top of the unit tests that prints out connectivity matrices (if you want to see them printed out rather than just test them).
 
     print "Testing on BCC Fe"
     print "Note: for this situation, where the central ion's peripheral ions is the same species as the ion itself, " \

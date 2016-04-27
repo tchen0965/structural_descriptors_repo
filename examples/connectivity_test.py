@@ -5,13 +5,15 @@ from structural_descriptors_repo import effective_coordination as ECoN
 from structural_descriptors_repo import connectivity_from_structure as connectivity
 import unittest
 
+# TODO: THROUGHOUT: use assertEqual and verify the exact value (or range using greater/less). Strong tests are better than weak tests. I pointed out a couple places where this needs fixing but there are more...
+
 class TestConnectivity(unittest.TestCase):
 
     def setUp(self):
         """Loading structures before tests"""
         #print "TestConnectivityMethods:setUp_"
         print "Loading structures from file"
-        self.FeStructure = Structure.from_file('Fe.cif', True, True)
+        self.FeStructure = Structure.from_file('Fe.cif', True, True)  # TODO: use Pythonic naming conventions. e.g. self.fe_structure. Note that the unittest class itself doesn't use Pythonic names, but we shouldn't copy them in this case.
         self.CaF2Structure = Structure.from_file('CaF2.cif', True, True)
         self.LiCoO2Structure = Structure.from_file('LiCoO2.cif', True, True)
         print "Structures from file loaded"
@@ -47,9 +49,9 @@ class TestConnectivity(unittest.TestCase):
         FeMatrix, FePolyhedra = connectivity.get_connectivity_matrix(self.FeStructure, True, 2.8, peripheral_species, central_species)
         self.assertIn('Fe1', FeMatrix.keys(), "Fe1 polyhedra not found in BCC Fe matrix")
         self.assertNotIn('Fe', FeMatrix.keys(), "Found Fe polyhedra instead of Fe1 polyhedra")
-        self.assertTrue(FeMatrix['Fe1']['Fe1']['point'] != 0, "Fe1 should be point-sharing")
-        self.assertTrue(FeMatrix['Fe1']['Fe1']['edge'] != 0, "Fe1 should be edge-sharing")
-        self.assertTrue(FeMatrix['Fe1']['Fe1']['face'] != 0, "Fe1 should be face-sharing")
+        self.assertTrue(FeMatrix['Fe1']['Fe1']['point'] != 0, "Fe1 should be point-sharing")  # TODO: use assertEqual and verify the exact value (or range using greater/less). Strong tests are better than weak tests.
+        self.assertTrue(FeMatrix['Fe1']['Fe1']['edge'] != 0, "Fe1 should be edge-sharing") # TODO: use assertEqual and verify the exact value (or range using greater/less). Strong tests are better than weak tests.
+        self.assertTrue(FeMatrix['Fe1']['Fe1']['face'] != 0, "Fe1 should be face-sharing") # TODO: use assertEqual and verify the exact value (or range using greater/less). Strong tests are better than weak tests.
 
         self.assertLessEqual(FeMatrix['Fe1']['Fe1']['face'], 6, "Face-sharing instances exceeds number of faces")
 
