@@ -14,7 +14,7 @@ __maintainer__ = "Stephen Dacek"
 __email__ = "sdacek@mit.edu"
 
 from pymatgen.analysis.structure_analyzer import VoronoiCoordFinder, VoronoiConnectivity
-from pymatgen.serializers.json_coders import MSONable
+from monty.json import MSONable
 from substructure_specie import SubStructureSpecie, SubStructureSite
 from pymatgen.core.ion import Ion
 from pymatgen.core.composition import Composition

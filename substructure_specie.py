@@ -13,7 +13,7 @@ __version__ = "0.1"
 __maintainer__ = "Stephen Dacek"
 __email__ = "sdacek@mit.edu"
 
-from pymatgen.serializers.json_coders import MSONable
+from monty.json import MSONable
 from pymatgen.core.periodic_table import Specie
 from pymatgen.core.sites import Site
 import numpy as np

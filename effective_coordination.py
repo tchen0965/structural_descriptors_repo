@@ -5,7 +5,6 @@ __contributor__ = 'Anubhav_Jain'
 
 import math
 import numpy
-from connectivity_from_structure import Polyhedra
 
 
 class EffectiveCoordFinder(object):

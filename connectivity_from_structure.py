@@ -2,12 +2,7 @@ __author__ = 'Tina_Chen'
 __contributor__ = 'Anubhav Jain'
 
 
-from pymatgen import Structure
-from pymatgen import PeriodicSite
-import effective_coordination as ECoN  # TODO: use selective imports, ie. "from X import Y". PyCharm will help you do this quickly and automatically.
-from pymatgen.analysis.structure_analyzer import VoronoiCoordFinder
-from itertools import combinations
-import math
+from effective_coordination import calculate_bond_weight, EffectiveCoordFinder, get_effective_CN
 import numpy
 import re
 
@@ -140,7 +135,7 @@ def get_polyhedra(structure, site, peripheral_species, radius=2.8):
                 bondlengths.append(entry[1])
     for potentialPeripheralIons in anionSites:
         #do not count nearby ions that do not contribute
-        if ECoN.calculate_bond_weight(potentialPeripheralIons[1], bondlengths) > 0.5:
+        if calculate_bond_weight(potentialPeripheralIons[1], bondlengths) > 0.5:
             peripheralSites.append(potentialPeripheralIons)
 
     return Polyhedra(site, peripheralSites)
@@ -334,7 +329,7 @@ def check_image_in_supercell(site1, site2, supercell_size):
     return is_image
 
 
-def get_connectivity_matrix(structure, sites_diff, radius=2.8, peripheral_species=None, central_species=None):
+def get_connectivity_matrix(structure, sites_diff=True, radius=2.8, peripheral_species=None, central_species=None):
     """
     Creates a connectivity matrix to describe the connectivity between cations in a structure; connections between
     cation polyhedra and reflections of itself (and reflections of other cation polyhedra) are also counted; different
@@ -415,6 +410,14 @@ def get_connectivity_matrix(structure, sites_diff, radius=2.8, peripheral_specie
             if connection >= 3:
                 connections[inner_cation][outer_cation]["face"] += 1
 
+    if sites_diff == False:
+        comp = structure.composition
+        for inner_cation in connections.keys():
+            for outer_cation in connections[inner_cation].keys():
+                connections[inner_cation][outer_cation]['face'] = connections[inner_cation][outer_cation]['face']/comp[inner_cation]
+                connections[inner_cation][outer_cation]['edge'] = connections[inner_cation][outer_cation]['edge']/comp[inner_cation]
+                connections[inner_cation][outer_cation]['point'] = connections[inner_cation][outer_cation]['point']/comp[inner_cation]
+
     return connections, polyhedra_list
 
 """
@@ -494,7 +497,7 @@ def get_connectivity_matrix_2(structure, radius = 2.8, peripheral_species=['O2-'
 """
 
 # TODO: please discuss the method below with me. It should not require setting a radius or anions. The user should be able to provide an appropriate object and this should just take care of describing that object. It should not start analyzing the structure using its own choice of algorithms...
-def get_connectivity_description(connectivity_matrix, polyhedra, structure, sites_diff, radius=2.8, anions=['O2-', 'O', 'F-', 'F', 'Cl-', 'Cl', 'I-', 'I', 'Br-', 'Br', 'S2-', 'S']):
+def get_connectivity_description(connectivity_matrix, polyhedra, structure, sites_diff, radius=2.8, anions=None):
     """
     Writes a verbal description of the connectivity between cations in a structure; connections between cation
     polyhedra and reflections of itself (and reflections of other cation polyhedra) are also counted; different
@@ -509,13 +512,16 @@ def get_connectivity_description(connectivity_matrix, polyhedra, structure, site
     structure
     """
 
-    CN_list = ECoN.EffectiveCoordFinder(structure).get_avg_CN(radius, anions)
+    if anions is None:
+        anions = ['O2-', 'O', 'F-', 'F', 'Cl-', 'Cl', 'I-', 'I', 'Br-', 'Br', 'S2-', 'S']
+
+    CN_list = EffectiveCoordFinder(structure).get_avg_CN(radius, anions)
     descriptions = {}
     for cation_1 in connectivity_matrix.keys():
         descriptions[cation_1] = ""
     for cation_1 in connectivity_matrix.keys():
         if sites_diff:
-            CN1 = ECoN.get_effective_CN(get_ex_poly(polyhedra, cation_1))
+            CN1 = get_effective_CN(get_ex_poly(polyhedra, cation_1))
         else:
             CN1 = CN_list[cation_1]
         descriptions[cation_1] += cation_1 + " are " + get_CN_description(CN1) + ". \n"
@@ -535,7 +541,7 @@ def get_connectivity_description(connectivity_matrix, polyhedra, structure, site
                         else:
                             descriptions[cation_1] += "and " + connectivity_type + "-connected "
                 if sites_diff:
-                    CN2 = ECoN.get_effective_CN(get_ex_poly(polyhedra, cation_2))
+                    CN2 = get_effective_CN(get_ex_poly(polyhedra, cation_2))
                 else:
                     CN2 = CN_list[cation_2]
                 descriptions[cation_1] += "to " + get_CN_description(CN2) + " " + cation_2 + ". "
@@ -560,7 +566,7 @@ def get_connectivity_description_sites_diff(connectivity_matrix, polyhedra):
         descriptions[cation_1] = ""
     for cation_1 in connectivity_matrix.keys():
         descriptions[cation_1] += cation_1 + " are " + \
-                                  get_CN_description(ECoN.get_effective_CN(get_ex_poly(polyhedra, cation_1))) + ". \n"
+                                  get_CN_description(get_effective_CN(get_ex_poly(polyhedra, cation_1))) + ". \n"
         for cation_2 in connectivity_matrix[cation_1].keys():
             connected = False
             for connectivity_type in connectivity_matrix[cation_1][cation_2].keys():
@@ -577,14 +583,13 @@ def get_connectivity_description_sites_diff(connectivity_matrix, polyhedra):
                         else:
                             descriptions[cation_1] += "and " + connectivity_type + "-connected "
                 descriptions[cation_1] += "to " + \
-                                          get_CN_description(ECoN.get_effective_CN(get_ex_poly(polyhedra, cation_2))) \
+                                          get_CN_description(get_effective_CN(get_ex_poly(polyhedra, cation_2))) \
                                           + " " + cation_2 + ". "
     return descriptions
 """
 
 
-# TODO: Mutable default args! please *actually* fix this everywhere
-def get_surrounding_connectivity(structure, polyhedra, radius=2.8, peripheral_species=['O2-', 'O', 'F-', 'F', 'Cl-', 'Cl', 'I-', 'I', 'Br-', 'Br', 'S2-', 'S'], central_species = []):
+def get_surrounding_connectivity(structure, polyhedra, radius=2.8, peripheral_species=None, central_species=None):
     """
     Gives the surrounding connectivity of a specific polyhedra in a given structure
 
@@ -593,6 +598,11 @@ def get_surrounding_connectivity(structure, polyhedra, radius=2.8, peripheral_sp
     :return: (list) list of polyhedra and their connections to the target polyhedra in the target structure, elements
     of the list are of the form: [[polyhedra, connection], ...]
     """
+    if peripheral_species is None:
+        peripheral_species = ['O2-', 'O', 'F-', 'F', 'Cl-', 'Cl', 'I-', 'I', 'Br-', 'Br', 'S2-', 'S']
+    if central_species is None:
+        central_species = []
+
     targetSite = polyhedra.central_ion
 
     polyhedraList = get_supercell_polyhedra(structure, radius, peripheral_species, central_species, 6)
@@ -616,80 +626,4 @@ def get_surrounding_connectivity(structure, polyhedra, radius=2.8, peripheral_sp
                 connectedPolyhedra.append([otherPolyhedra, connection])
 
     return connectedPolyhedra
-
-
-
-if __name__ == '__main__':
-
-    # TODO: is this code needed? You have the unit tests already or should make these into unit tests. If you want, you can add a DEBUG parameter at the top of the unit tests that prints out connectivity matrices (if you want to see them printed out rather than just test them).
-
-    print "Testing on BCC Fe"
-    print "Note: for this situation, where the central ion's peripheral ions is the same species as the ion itself, " \
-          "we need to specify both the central species and the peripheral species\n"
-    s1 = Structure.from_file('Fe.cif', True, False)
-    print s1
-    central_species = ['Fe']
-    peripheral_species = ['Fe']
-    Fematrix, Fepolyhedra = get_connectivity_matrix(s1, True, 2.8, peripheral_species, central_species)
-    print ""
-    print Fematrix
-    print ""
-    Fedescriptions = get_connectivity_description(Fematrix, Fepolyhedra, s1, True)
-    for cation_1 in Fedescriptions.keys():
-        print Fedescriptions[cation_1]
-        print ""
-
-    print "Testing on CaF2"
-
-    s2 = Structure.from_file('CaF2.cif', True, False)
-
-    print s2
-    print ""
-    print "Identifying connectivity between Ca-centered polyhedra"
-    central_species = ['Ca']
-    peripheral_species = ['F']
-    CaFmatrix, CaFpolyhedra = get_connectivity_matrix(s2, True, 2.8, peripheral_species, central_species)
-    print ""
-    print CaFmatrix
-    print ""
-    CaFdescriptions = get_connectivity_description(CaFmatrix, CaFpolyhedra, s2, True)
-    for cation_1 in CaFdescriptions.keys():
-        print CaFdescriptions[cation_1]
-        print ""
-
-
-    s2 = Structure.from_file('CaF2.cif', True, False)
-    central_species = ['F']
-    peripheral_species = ['Ca']
-    #print "Identifying connectivity between F-centered polyhedra"
-    #print get_connectivity_matrix(s2, 2.8, peripheral_species, central_species)
-    #print ""
-    print "Identifying connectivity between F-centered polyhedra, distinguishing between the two different sites in the" \
-          " structure"
-    print ""
-    FCamatrix, FCapolyhedra = get_connectivity_matrix(s2, True, 2.8, peripheral_species, central_species)
-    print FCamatrix
-    print ""
-    FCadescriptions = get_connectivity_description(FCamatrix, FCapolyhedra, s2, True)
-    for cation_1 in FCadescriptions.keys():
-        print FCadescriptions[cation_1]
-        print ""
-
-
-    print "Testing on LiCoO2"
-    print "Note: default value for peripheral species is " \
-          "['O2-', 'O', 'F-', 'F', 'Cl-', 'Cl', 'I-', 'I', 'Br-', 'Br', 'S2-', 'S']"
-    print "Default value for central species is all species in the material that are not a peripheral species"
-    s3 = Structure.from_file('LiCoO2.cif', True, False)
-    print s3
-    print ""
-    LiCoO2matrix, LiCoO2polyhedra = get_connectivity_matrix(s3, True, 2.8)
-    print LiCoO2matrix
-    print ""
-    LiCoO2descriptions = get_connectivity_description(LiCoO2matrix, LiCoO2polyhedra, s3, True)
-    for cation_1 in LiCoO2descriptions.keys():
-        print LiCoO2descriptions[cation_1]
-        print ""
-
-
 
