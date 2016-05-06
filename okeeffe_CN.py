@@ -1,9 +1,9 @@
 from __future__ import division
+from substructure import substructures_from_structure
+import numpy
 
 __author__ = 'Tina'
 
-from substructure import substructures_from_structure
-import numpy
 
 """
 
@@ -15,7 +15,7 @@ averages the effective coordination of all polyhedral with the same cation at th
 """
 
 
-def get_avg_CN(structure):
+def get_avg_cn(structure):
     """
 
     Get average O'Keeffe coordination number for all cations in structure
@@ -24,17 +24,17 @@ def get_avg_CN(structure):
     :return: (dict) A dictionary with keys corresponding to different cations and the values to the cation's O'Keeffe
         coordination number averaged over all polyhedra with the same cation center in the structure
     """
-    substructList = substructures_from_structure(structure)
-    cationsAlreadySeen = {}
-    listCN = {}
-    for substruct in substructList:
+    substruct_list = substructures_from_structure(structure)
+    cations_already_seen = {}
+    list_cn = {}
+    for substruct in substruct_list:
         cation = substruct.central_subspecies.specie.symbol
-        if not cation in cationsAlreadySeen.keys():
-            cationsAlreadySeen[cation] = 0
-            listCN[cation] = [substruct.weight_sum()]
+        if not cation in cations_already_seen.keys():
+            cations_already_seen[cation] = 0
+            list_cn[cation] = [substruct.weight_sum()]
         else:
-            listCN[cation].append(substruct.weight_sum())
+            list_cn[cation].append(substruct.weight_sum())
     avgCNs = {}
-    for cation in listCN.keys():
-        avgCNs[cation] = numpy.mean(listCN[cation])
+    for cation in list_cn.keys():
+        avgCNs[cation] = numpy.mean(list_cn[cation])
     return avgCNs
