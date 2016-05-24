@@ -27,7 +27,43 @@ class EffectiveCoordFinder(object):
     def __init__(self, structure):
         self._structure = structure
 
-    def get_avg_cn(self, radius=3.0, anions=None):
+    def get_site_cn(self, site, radius=2.6, min_weight=10e-5):
+
+        neighboring_sites = []
+        anion_sites = []  # list of all neighboring anions
+        bond_lengths = []  # list of bond lengths of anions
+        bond_weights = []  # list of bond weights of anions
+        for entry in self._structure.get_neighbors(site, radius):  # entry = (site, distance)
+            anion_sites.append(entry)
+            bond_lengths.append(entry[1])
+
+        for bond in anion_sites:
+            # do not count nearby anions that do not contribute
+            if calculate_bond_weight(bond[1], bond_lengths) > min_weight:
+                neighboring_sites.append(bond)
+                bond_weights.append(calculate_bond_weight(bond[1], bond_lengths))
+
+        return sum(bond_weights)
+
+    def get_site_neighbors(self, site, radius=2.6, min_weight=10e-5):
+
+        neighboring_sites = []
+        anion_sites = []  # list of all neighboring anions
+        bond_lengths = []  # list of bond lengths of anions
+        bond_weights = []  # list of bond weights of anions
+        for entry in self._structure.get_neighbors(site, radius):  # entry = (site, distance)
+            anion_sites.append(entry)
+            bond_lengths.append(entry[1])
+
+        for bond in anion_sites:
+            # do not count nearby anions that do not contribute
+            if calculate_bond_weight(bond[1], bond_lengths) > min_weight:
+                neighboring_sites.append(bond)
+                bond_weights.append(calculate_bond_weight(bond[1], bond_lengths))
+
+        return neighboring_sites
+
+    def get_avg_cn(self, radius=2.6, anions=None):
         """
         Get the average coordination for all cations in structure.
 
@@ -48,7 +84,7 @@ class EffectiveCoordFinder(object):
 
         return avg_cns
 
-    def get_cation_cn(self, radius=3.0, anions=None):
+    def get_cation_cn(self, radius=2.6, min_weight=10e-5, anions=None):
         """
         Get all cation-centered polyhedra for a structure
 
@@ -69,26 +105,13 @@ class EffectiveCoordFinder(object):
         # TODO: PolyhedralList needs to be a more organized/encapsulated data structure. Talk to Anubhav
         cn_list = {}  # list of polyhedrals with cations at the center
         for site in cation_sites:
-            sites = {}
-            sites[site.species_string] = []
-            anion_sites = []  # list of all neighboring anions
-            bond_lengths = []  # list of bond lengths of anions
-            bond_weights = []  # list of bond weights of anions
-            for entry in self._structure.get_neighbors(site, radius):  # entry = (site, distance)
-                if entry[0].species_string in anions and entry[1] < radius:
-                    anion_sites.append(entry)
-                    bond_lengths.append(entry[1])
 
-            for bond in anion_sites:
-                # do not count nearby anions that do not contribute
-                if calculate_bond_weight(bond[1], bond_lengths) > 10e-5:
-                    sites[site.species_string].append(bond)
-                    bond_weights.append(calculate_bond_weight(bond[1], bond_lengths))
+            site_cn = self.get_site_cn(site, radius, min_weight)
 
             if site.species_string not in cn_list.keys():
-                cn_list[site.species_string] = [sum(bond_weights)]
+                cn_list[site.species_string] = [site_cn]
             else:
-                cn_list[site.species_string].append(sum(bond_weights))
+                cn_list[site.species_string].append(site_cn)
 
         return cn_list
 
