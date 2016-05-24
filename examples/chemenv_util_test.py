@@ -13,10 +13,10 @@ class TestChemEnvUtil(unittest.TestCase):
 
     def setUp(self):
         """Set up Structure from Cif file and path to jsons folder in Chemenv module in Pymatgen"""
-        self.structure = Structure.from_file('/Users/tinachen/Documents/grad_research/N-materials/Sr3Ge2N2.cif', True, False)
-        #self.structure.make_supercell([3, 3, 3])
+        self.structure = Structure.from_file('LiCoO2.cif', True, False)
+        self.structure.make_supercell([3, 3, 3])
         for isite, site in enumerate(self.structure._sites):
-            if site.species_string == 'Sr':
+            if site.species_string == 'Li':
                 self.first_site = site
                 self.ifirst_site = isite
                 break
@@ -28,12 +28,9 @@ class TestChemEnvUtil(unittest.TestCase):
         ce = find_site_ce(self.structure, self.ifirst_site)
         with open(self.path_to_jsons+"/%s.json" % ce) as json_file:
             data = json.load(json_file)
-        print data['mp_symbol']
-        print data['coordination']
-        print data['name']
-        #self.assertEqual(data['mp_symbol'], "O:6", "Li polyhedra should be 6-coordinated octahedron")
-        #self.assertEqual(data['coordination'], 6, "Li polyhedra should be 6-coordinated octahedron")
-        #self.assertEqual(data['name'], "Octahedron", "Li polyhedra should be 6-coordinated octahedron")
+        self.assertEqual(data['mp_symbol'], "O:6", "Li polyhedra should be 6-coordinated octahedron")
+        self.assertEqual(data['coordination'], 6, "Li polyhedra should be 6-coordinated octahedron")
+        self.assertEqual(data['name'], "Octahedron", "Li polyhedra should be 6-coordinated octahedron")
 
     def test_species_chemenv(self):
         """Test finding the coordination environments (mp symbols) of a specific species in a structure using Chemenv"""
@@ -42,12 +39,9 @@ class TestChemEnvUtil(unittest.TestCase):
         for ce in ces:
             with open(self.path_to_jsons+"/%s.json" % ce) as json_file:
                 data = json.load(json_file)
-            print data['mp_symbol']
-            print data['coordination']
-            print data['name']
-            #self.assertEqual(data['mp_symbol'], "O:6", "Li polyhedra should be 6-coordinated octahedron")
-            #self.assertEqual(data['coordination'], 6, "Li polyhedra should be 6-coordinated octahedron")
-            #self.assertEqual(data['name'], "Octahedron", "Li polyhedra should be 6-coordinated octahedron")
+            self.assertEqual(data['mp_symbol'], "O:6", "Li polyhedra should be 6-coordinated octahedron")
+            self.assertEqual(data['coordination'], 6, "Li polyhedra should be 6-coordinated octahedron")
+            self.assertEqual(data['name'], "Octahedron", "Li polyhedra should be 6-coordinated octahedron")
 
     def test_species_from_light_structure_chemenv(self):
         """Test finding the ce's (mp symbols) of a species but starting from a Light Structure Environment object"""
@@ -63,12 +57,9 @@ class TestChemEnvUtil(unittest.TestCase):
         for ce in ces:
             with open(self.path_to_jsons+"/%s.json" % ce) as json_file:
                 data = json.load(json_file)
-            print data['mp_symbol']
-            print data['coordination']
-            print data['name']
-            #self.assertEqual(data['mp_symbol'], "O:6", "Li polyhedra should be 6-coordinated octahedron")
-            #self.assertEqual(data['coordination'], 6, "Li polyhedra should be 6-coordinated octahedron")
-            #self.assertEqual(data['name'], "Octahedron", "Li polyhedra should be 6-coordinated octahedron")
+            self.assertEqual(data['mp_symbol'], "O:6", "Li polyhedra should be 6-coordinated octahedron")
+            self.assertEqual(data['coordination'], 6, "Li polyhedra should be 6-coordinated octahedron")
+            self.assertEqual(data['name'], "Octahedron", "Li polyhedra should be 6-coordinated octahedron")
 
 
 if __name__ == '__main__':

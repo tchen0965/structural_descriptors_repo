@@ -22,7 +22,6 @@ class TestConnectivity(unittest.TestCase):
 
     def test_connectivity_matrix_Fe(self):
         """Test Routine Connectivity Matrix for BCC Fe"""
-        self.skipTest("")
         central_species = ['Fe']
         peripheral_species = ['Fe']
         fe_matrix, fe_polyhedra, supercell = \
@@ -40,7 +39,6 @@ class TestConnectivity(unittest.TestCase):
 
     def test_connectivity_matrix_sites_diff_Fe(self):
         """Test Routine Connectivity Matrix Differentiating Sites for BCC Fe"""
-        self.skipTest("")
         central_species = ['Fe']
         peripheral_species = ['Fe']
         fe_matrix, fe_polyhedra, supercell = \
@@ -58,7 +56,6 @@ class TestConnectivity(unittest.TestCase):
 
     def test_connectivity_matrix_CaF2(self):
         """Test Routine Connectivity Matrix for CaF2"""
-        self.skipTest("")
         central_species = ['Ca']
         peripheral_species = ['F']
         caf2_matrix, caf2_polyhedra, supercell = \
@@ -84,7 +81,6 @@ class TestConnectivity(unittest.TestCase):
 
     def test_connectivity_matrix_sites_diff_CaF2(self):
         """Test Routine Connectivity Matrix Differentiating Sites for CaF2"""
-        self.skipTest("")
         central_species = ['Ca']
         peripheral_species = ['F']
         caf2_matrix, caf2_polyhedra, supercell = \
@@ -115,7 +111,6 @@ class TestConnectivity(unittest.TestCase):
 
     def test_connectivity_matrix_LiCoO2(self):
         """Test Routine Connectivity Matrix for LiCoO2"""
-        self.skipTest("")
         licoo2_matrix, licoo2_polyhedra, supercell = \
             connectivity.get_connectivity_matrix(self.licoo2_structure, False)
         self.assertIn('Li', licoo2_matrix.keys(), "Li not found in LiCoO2 matrix")
@@ -137,7 +132,6 @@ class TestConnectivity(unittest.TestCase):
 
     def test_connectivity_description(self):
         """Test Routine Connectivity Description on BCC Fe"""
-        self.skipTest("")
         central_species = ['Fe']
         peripheral_species = ['Fe']
         fe_matrix, fe_polyhedra, supercell = \
@@ -151,7 +145,6 @@ class TestConnectivity(unittest.TestCase):
 
     def test_connectivity_description_sites_diff(self):
         """Test Routine Connectivity Description on LiCoO2"""
-        self.skipTest("")
         licoo2_matrix, licoo2_polyhedra, supercell = \
             connectivity.get_connectivity_matrix(self.licoo2_structure, True)
         licoo2_descriptions = connectivity.get_connectivity_description(licoo2_matrix, licoo2_polyhedra, self.licoo2_structure, True)
@@ -165,15 +158,8 @@ class TestConnectivity(unittest.TestCase):
                             or isinstance(licoo2_descriptions[cation], unicode),
                             "Descriptions are not type str or unicode")
 
-    def test_connectivity_description_2(self):
-        """Test Routine Connectivity Description using ChemEnv"""
-        licoo2_descriptions = connectivity.get_connectivity_description_1(self.licoo2_structure, 2.8)
-        for cation in licoo2_descriptions.keys():
-            print licoo2_descriptions[cation]
-
     def test_surrounding_connectivity(self):
         """Test Routine Surrounding Connectivity on Li polyhedra of LiCoO2"""
-        self.skipTest("")
         # Testing polyhedra that are not specified by site number
         licoo2_matrix, licoo2_polyhedra, supercell = connectivity.get_connectivity_matrix(self.licoo2_structure, False)
         for polyhedra in licoo2_polyhedra:
