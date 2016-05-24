@@ -45,6 +45,9 @@ class EffectiveCoordFinder(object):
 
         return sum(bond_weights)
 
+    def get_isite_cn(self, isite, radius=2.6, min_weight=10e-5):
+        return self.get_site_cn(self._structure[isite], radius, min_weight)
+
     def get_site_neighbors(self, site, radius=2.6, min_weight=10e-5):
 
         neighboring_sites = []

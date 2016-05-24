@@ -97,6 +97,17 @@ class TestCoordinationMethods(unittest.TestCase):
         cn = econ.get_effective_cn(test_poly)
         self.assertAlmostEqual(cn, 6.0, 2, "Li polyhedra should be 6-fold coordinated")
 
+    def test_econ_for_site(self):
+        for isite, site in enumerate(self.caf2_structure._sites):
+            if site.species_string == 'Ca':
+                first_site = site
+                ifirst_site = isite
+        self.assertAlmostEqual(self.caf2_finder.get_site_cn(first_site), 8, 1,
+                               "Ca should be, on average, 8-fold coordinated in CaF2")
+        self.assertEqual(self.caf2_finder.get_site_cn(first_site), self.caf2_finder.get_isite_cn(ifirst_site),
+                         "CN from site and CN from index of site should be the same")
+
+
 if __name__ == '__main__':
     
     unittest.main()
