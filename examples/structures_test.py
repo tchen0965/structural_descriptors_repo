@@ -22,7 +22,7 @@ class TestVariousStructures(unittest.TestCase):
 
         barite_structure = Structure.from_file('test_structures/barite.cif', True, True)
         cn_finder = EffectiveCoordFinder(barite_structure)
-        cns = cn_finder.get_avg_CN(anions=['O'])
+        cns = cn_finder.get_avg_cn(anions=['O'])
         for cation in cns:
             self.assertTrue(cation == "Ba" or cation == "S",
                             "Ba and SO4 polyanions should be the only ions in barite")
@@ -64,7 +64,7 @@ class TestVariousStructures(unittest.TestCase):
 
         k2so4_structure = Structure.from_file('test_structures/beta-K2SO4.cif', True, True)
         cn_finder = EffectiveCoordFinder(k2so4_structure)
-        cns = cn_finder.get_avg_CN(radius=3.2, anions=['O'])
+        cns = cn_finder.get_avg_cn(radius=3.2, anions=['O'])
         for cation in cns:
             self.assertTrue(cation == "K" or cation == "S", "Ba and S should be only ions in beta-K2SO4")
             if cation == 'K':
@@ -77,7 +77,6 @@ class TestVariousStructures(unittest.TestCase):
 
         connectivity_matrix, connectivity_polyhedra = \
             get_connectivity_matrix(k2so4_structure, False, 3.2, peripheral_species, central_species)
-        print connectivity_matrix
         self.assertIn('K', connectivity_matrix.keys(), "K polyhedra not found in beta-K2SO4 matrix")
         self.assertIn('S', connectivity_matrix.keys(), "SO4 polyanions not found in beta-K2SO4 matrix")
         self.assertEqual(connectivity_matrix['K']['K']['point'], 6, "K should be point-sharing")
@@ -106,7 +105,7 @@ class TestVariousStructures(unittest.TestCase):
         caf2_structure = Structure.from_file('test_structures/fluorite.cif', True, True)
 
         cn_finder = EffectiveCoordFinder(caf2_structure)
-        cns = cn_finder.get_avg_CN(radius=2.6, anions=['F'])
+        cns = cn_finder.get_avg_cn(radius=2.6, anions=['F'])
         for cation in cns:
             self.assertEqual(cation, "Ca", "Ca should be the only ions in CaF2 fluorite")
             if cation == 'Ca':
@@ -132,7 +131,7 @@ class TestVariousStructures(unittest.TestCase):
         cafe2o4_structure = Structure.from_file('test_structures/CaFe2O4.cif', True, True)
 
         cn_finder = EffectiveCoordFinder(cafe2o4_structure)
-        cns = cn_finder.get_avg_CN(radius=2.6, anions=['O'])
+        cns = cn_finder.get_avg_cn(radius=2.6, anions=['O'])
         for cation in cns:
             self.assertTrue(cation == "Ca" or cation == "Fe",
                             "Ca and Fe should be the only cations in CaFe2O4 structure")
@@ -175,7 +174,7 @@ class TestVariousStructures(unittest.TestCase):
 
         calcite_structure = Structure.from_file('test_structures/calcite.cif', True, True)
         cn_finder = EffectiveCoordFinder(calcite_structure)
-        cns = cn_finder.get_avg_CN(radius=2.5, anions=['O'])
+        cns = cn_finder.get_avg_cn(radius=2.5, anions=['O'])
         for cation in cns:
             self.assertTrue(cation == "Ca" or cation == "C", "Ca and C should be the only ions in CaCO3")
             if cation == 'Ca':
@@ -217,7 +216,7 @@ class TestVariousStructures(unittest.TestCase):
         corundum_structure = Structure.from_file('test_structures/corundum.cif', True, True)
 
         cn_finder = EffectiveCoordFinder(corundum_structure)
-        cns = cn_finder.get_avg_CN(radius=2.6, anions=['O'])
+        cns = cn_finder.get_avg_cn(radius=2.6, anions=['O'])
         for cation in cns:
             self.assertTrue(cation == "Cr", "Cr should be the only ions in corundum Cr2O3")
             if cation == 'Cr':
@@ -243,7 +242,7 @@ class TestVariousStructures(unittest.TestCase):
         hexagonal_structure = Structure.from_file('test_structures/HexagonalABX3.cif', True, True)
 
         cn_finder = EffectiveCoordFinder(hexagonal_structure)
-        cns = cn_finder.get_avg_CN(radius=3.2, anions=['O'])
+        cns = cn_finder.get_avg_cn(radius=3.2, anions=['O'])
         for cation in cns:
             self.assertTrue(cation == "Ba" or cation == "Ni",
                             "Ba and Ni should be the only ions in hexagonal BaNiO3")
@@ -287,7 +286,7 @@ class TestVariousStructures(unittest.TestCase):
         k2nif4_structure = Structure.from_file('test_structures/K2NiF4.cif', True, True)
 
         cn_finder = EffectiveCoordFinder(k2nif4_structure)
-        cns = cn_finder.get_avg_CN(radius=3.0, anions=['F'])
+        cns = cn_finder.get_avg_cn(radius=3.0, anions=['F'])
         for cation in cns:
             self.assertTrue(cation == "K" or cation == "Ni",
                             "K and Ni should be the only cations in K2NiF4 structure")
@@ -331,7 +330,7 @@ class TestVariousStructures(unittest.TestCase):
         olivine_structure = Structure.from_file('test_structures/olivine.cif', True, True)
 
         cn_finder = EffectiveCoordFinder(olivine_structure)
-        cns = cn_finder.get_avg_CN(radius=2.6, anions=['O'])
+        cns = cn_finder.get_avg_cn(radius=2.6, anions=['O'])
         for cation in cns:
             self.assertTrue(cation == "Fe" or cation == "Si",
                             "Fe and Si cations should be the only cations in olivine Fe2SiO4")
@@ -373,7 +372,7 @@ class TestVariousStructures(unittest.TestCase):
 
         phenacite_structure = Structure.from_file('test_structures/phenacite.cif', True, True)
         cn_finder = EffectiveCoordFinder(phenacite_structure)
-        cns = cn_finder.get_avg_CN(radius=2.6, anions=['O'])
+        cns = cn_finder.get_avg_cn(radius=2.6, anions=['O'])
         for cation in cns:
             self.assertTrue(cation == "Be" or cation == "Si",
                             "Be and Si polyanions should be the only ions in phenacite Be2SiO4")
@@ -415,7 +414,7 @@ class TestVariousStructures(unittest.TestCase):
         pyroxene_structure = Structure.from_file('test_structures/pyroxene.cif', True, True)
 
         cn_finder = EffectiveCoordFinder(pyroxene_structure)
-        cns = cn_finder.get_avg_CN(radius=2.6, anions=['O'])
+        cns = cn_finder.get_avg_cn(radius=2.6, anions=['O'])
         for cation in cns:
             self.assertTrue(cation == "Mg" or cation == "Si", "Mg and Si should be the only ions in pyroxene MgSiO4")
             if cation == 'Mg':
@@ -458,7 +457,7 @@ class TestVariousStructures(unittest.TestCase):
         reo3_structure = Structure.from_file('test_structures/ReO3.cif', True, True)
 
         cn_finder = EffectiveCoordFinder(reo3_structure)
-        cns = cn_finder.get_avg_CN(radius=2.6, anions=['O'])
+        cns = cn_finder.get_avg_cn(radius=2.6, anions=['O'])
         for cation in cns:
             self.assertTrue(cation == "Re", "Re should be the only ions in ReO3 structure")
             if cation == 'Re':
@@ -483,7 +482,7 @@ class TestVariousStructures(unittest.TestCase):
         rocksalt_structure = Structure.from_file('test_structures/rocksalt.cif', True, True)
 
         cn_finder = EffectiveCoordFinder(rocksalt_structure)
-        cns = cn_finder.get_avg_CN(radius=3.0, anions=['Cl'])
+        cns = cn_finder.get_avg_cn(radius=3.0, anions=['Cl'])
         for cation in cns:
             self.assertTrue(cation == "Na", "Na should be the only ions in rocksalt NaCl structure")
             if cation == 'Na':
@@ -508,7 +507,7 @@ class TestVariousStructures(unittest.TestCase):
         rutile_structure = Structure.from_file('test_structures/rutile.cif', True, True)
 
         cn_finder = EffectiveCoordFinder(rutile_structure)
-        cns = cn_finder.get_avg_CN(radius=2.6, anions=['O'])
+        cns = cn_finder.get_avg_cn(radius=2.6, anions=['O'])
         for cation in cns:
             self.assertTrue(cation == "Ti", "Ti should be the only ions in rocksalt NaCl structure")
             if cation == 'Ti':
@@ -533,7 +532,7 @@ class TestVariousStructures(unittest.TestCase):
         scheelite_structure = Structure.from_file('test_structures/scheelite.cif', True, True)
 
         cn_finder = EffectiveCoordFinder(scheelite_structure)
-        cns = cn_finder.get_avg_CN(radius=2.6, anions=['O'])
+        cns = cn_finder.get_avg_cn(radius=2.6, anions=['O'])
         for cation in cns:
             self.assertTrue(cation == "Ca" or cation == "W", "Ca and W should be the only ions in scheelite CaWO4")
             if cation == 'Ca':
@@ -576,7 +575,7 @@ class TestVariousStructures(unittest.TestCase):
         sio2_structure = Structure.from_file('test_structures/SiO2.cif', True, True)
 
         cn_finder = EffectiveCoordFinder(sio2_structure)
-        cns = cn_finder.get_avg_CN(radius=2.6, anions=['O'])
+        cns = cn_finder.get_avg_cn(radius=2.6, anions=['O'])
         for cation in cns:
             self.assertTrue(cation == "Si", "Si should be the only ions in SiO2 structure")
             if cation == 'Si':
@@ -600,7 +599,7 @@ class TestVariousStructures(unittest.TestCase):
 
         spinel_structure = Structure.from_file('test_structures/spinel.cif', True, True)
         cn_finder = EffectiveCoordFinder(spinel_structure)
-        cns = cn_finder.get_avg_CN(radius=2.6, anions=['O'])
+        cns = cn_finder.get_avg_cn(radius=2.6, anions=['O'])
         for cation in cns:
             self.assertTrue(cation == "Mg" or cation == "Al",
                             "Mg and Al polyanions should be the only ions in spinel MgAl2O4")
@@ -642,7 +641,7 @@ class TestVariousStructures(unittest.TestCase):
 
         perovskite_structure = Structure.from_file('test_structures/perovskite.cif', True, True)
         cn_finder = EffectiveCoordFinder(perovskite_structure)
-        cns = cn_finder.get_avg_CN(radius=3.2, anions=['O'])
+        cns = cn_finder.get_avg_cn(radius=3.2, anions=['O'])
         for cation in cns:
             self.assertTrue(cation == "Sr" or cation == "Ti",
                             "Be and Si polyanions should be the only ions in phenacite Be2SiO4")
@@ -684,7 +683,7 @@ class TestVariousStructures(unittest.TestCase):
 
         zircon_structure = Structure.from_file('test_structures/zircon.cif', True, True)
         cn_finder = EffectiveCoordFinder(zircon_structure)
-        cns = cn_finder.get_avg_CN(radius=2.6, anions=['O'])
+        cns = cn_finder.get_avg_cn(radius=2.6, anions=['O'])
         for cation in cns:
             self.assertTrue(cation == "Zr" or cation == "Si",
                             "Zr and Si polyanions should be the only ions in zircon ZrSiO4")
@@ -726,7 +725,7 @@ class TestVariousStructures(unittest.TestCase):
 
         znso4_structure = Structure.from_file('test_structures/ZnSO4.cif', True, True)
         cn_finder = EffectiveCoordFinder(znso4_structure)
-        cns = cn_finder.get_avg_CN(radius=2.6, anions=['O'])
+        cns = cn_finder.get_avg_cn(radius=2.6, anions=['O'])
         for cation in cns:
             self.assertTrue(cation == "Zn" or cation == "S", "Zn and S should be the only ions in zircon ZrSiO4")
             if cation == 'Zn':
