@@ -49,8 +49,8 @@ def find_species_string_ce(structure, species_string, min_fraction=0.0):
     :return: (List of Strings) List of mp_symbols of all site coordination environments for the given species_string
     """
     s1_finder = polyfinder.LocalGeometryFinder()
-    s1_finder.setup_structure(structure)
     s1_finder.setup_parameters(centering_type='standard', structure_refinement='none')
+    s1_finder.setup_structure(structure)
     environments = s1_finder.compute_structure_environments_detailed_voronoi(maximum_distance_factor=1.5)
 
     light_se = se.LightStructureEnvironments(strategies.SimplestChemenvStrategy(), environments)
@@ -61,6 +61,31 @@ def find_species_string_ce(structure, species_string, min_fraction=0.0):
     for isite, site in enumerate(light_se.structure):
         if element in [sp.symbol for sp in site.species_and_occu]:
             for ce_dict in light_se._coordination_environments[isite]:
+                if ce_dict['fraction'] < min_fraction:
+                    continue
+                if ce_dict['ce_symbol'] not in all_ces:
+                    all_ces[ce_dict['ce_symbol']] = {'isites': [], 'fractions': [], 'csms': []}
+                all_ces[ce_dict['ce_symbol']]['isites'].append(isite)
+                all_ces[ce_dict['ce_symbol']]['fractions'].append(ce_dict['fraction'])
+                all_ces[ce_dict['ce_symbol']]['csms'].append(ce_dict['csm'])
+    return all_ces.keys()
+
+
+def find_species_ce_from_light_se(light_structure, species_string, min_fraction=0.0):
+    """
+    Returns mp_symbol's of all site coordination environments for the given species_string
+    :param structure: (Structure) Structure containing target species
+    :param species_string: (String) String representing the species we are looking for
+    :param min_fraction: (float) minimum fraction that coordination environment of a site is calculated to be to be
+    added to the list of site coordination environments
+    :return: (List of Strings) List of mp_symbols of all site coordination environments for the given species_string
+    """
+
+    all_ces = {}
+    element = species_string
+    for isite, site in enumerate(light_structure.structure):
+        if element in [sp.symbol for sp in site.species_and_occu]:
+            for ce_dict in light_structure._coordination_environments[isite]:
                 if ce_dict['fraction'] < min_fraction:
                     continue
                 if ce_dict['ce_symbol'] not in all_ces:
