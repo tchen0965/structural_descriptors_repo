@@ -24,8 +24,8 @@ def find_site_ce(structure, target_site):
 
     # Set up LocalGeometryFinder
     s1_finder = polyfinder.LocalGeometryFinder()
-    s1_finder.setup_structure(structure)
     s1_finder.setup_parameters(centering_type='standard', structure_refinement='none')
+    s1_finder.setup_structure(structure)
 
     # Find site environment from LocalGeometryFinder
     environments = s1_finder.compute_structure_environments_detailed_voronoi(only_indices=[target_site],
@@ -54,7 +54,6 @@ def find_species_string_ce(structure, species_string, min_fraction=0.0):
     environments = s1_finder.compute_structure_environments_detailed_voronoi(maximum_distance_factor=1.5)
 
     light_se = se.LightStructureEnvironments(strategies.SimplestChemenvStrategy(), environments)
-    print light_se._coordination_environments[0]
 
     all_ces = {}
     element = species_string
